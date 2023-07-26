@@ -1,0 +1,66 @@
+---
+title: "Delineamento Inteiramente ao acaso"
+author: "Heloiza de Oliveira"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## ANOVA e Teste Tukey de um Delineamento Inteiramente ao acaso
+
+Um fabricante suspeita que os lotes de matéria-prima fornecidos por seu fornecedor diferem significativamente no teor de cálcio. Há um grande número de lotes atualmente no depósito. Cinco deles são selecionados aleatoriamente para estudo. O químico faz cinco determinações em cada lote e obtém os dados:
+
+```{r}
+
+calcio <- data.frame(lote = c(rep('lote 1',5), rep('lote 2',5), rep('lote 3',5), rep('lote 4',5), rep('lote 5',5)),
+                     calcio = c(23.46,23.48,23.56,23.39,23.40,23.59,23.56,23.42,23.49,23.50,23.51,23.64,23.46,23.52,23.49,23.28,23.40,23.37,23.46,23.39,23.29,23.46,23.37,23.32,23.38))
+
+calcio$lote <- factor(calcio$lote)
+```
+
+Existe variação significativa no teor de cálcio de
+lote para lote? Usar $\alpha$ = 0,05.
+
+A fim de visualizar a distribuição do teor de cálcio por cada lote examinado, plotamos o gráfico box plot que apresenta o resumo das principaos medidas descritas, tornando evidente a variação entre os lotes.
+
+```{r}
+library(ggplot2)
+
+ggplot(data = calcio, mapping = aes(x = lote, y = calcio)) +
+  geom_boxplot(fill = "grey")
+```
+
+A ANOVA faz a comparação das médias de várias populações independentes, assumindo que o efeito da variável resposta (quantitativa) $\textbf{Y}$ é devida aos fatores qualitativos $\textbf{X}$, e identificando se os fatores diferem entre si.
+Contudo a ANOVA é um teste paramétrico com pressupostos: de normalidade dos resíduos e homogeneidade da variância.
+
+Para validar a normalidade dos resíduos do modelo, podemos analisar graficamente ou por meio de testes como o Teste Shapiro-Wilk que tem por hipótese nula que os dados são distribuidos pela normal. Como o valor de p não é significativo não rejeitamos a hipótese de normalidade dos resíduos.
+
+```{r}
+anova <- aov(calcio ~ lote, data = calcio)
+
+shapiro.test(residuals(anova))
+```
+
+O segundo pressuposto a ser atendido é o de homogeneidade das variâncias, e uma das formas de verificar isso é por meio do Teste de Bartlett com $H_0$ que todas as k população tem variância igual. Como o valor de p não é significativo não rejeitamos a hipótese de homogeneidade das variâncias.
+
+```{r}
+bartlett.test(calcio ~ lote, data = calcio)
+leveneT
+```
+
+Tendo os pressupostos do modelo ANOVA atendidos, proceguimos com a análise e notamos que o valor de p é significativo levando a rejeitar a hipótese nula de que não há diferença significativa entre os grupos, logo pelo menos um par se difere. 
+
+```{r}
+summary(anova)
+```
+
+Tendo conhecimento de que pelo menos um par dos grupos difere entre si, é interessante identificar quais são e uma comparação entre os mesmos, para isso podemos utilizar o Teste de comparações múltiplas de Tukey. Esse teste determina uma diferença mínima significativa (DMS) e esse valor se torna uma limite de igualdade, se a diferença da média de um grupo pela DMS for maior que a DMS esses grupos são diferentes entre si. Então 2 a 2 o teste de Tukey verifica a igualdade da média dos grupos.
+
+```{r}
+tukey <- HSD.test(y = anova, trt = 'lote')
+tukey$groups
+```
+
+Quando duas médias são iguais elas recebem uma mesma letra em comum, logo podemos notar que os lotes 3 e 2 são significativamente diferentes dos lotes 4 e 5. 
