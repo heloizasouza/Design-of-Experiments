@@ -10,6 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## ANOVA e Teste Tukey de um Delineamento Inteiramente ao acaso
 
+
+### Problema 1
+
 Um fabricante suspeita que os lotes de matéria-prima fornecidos por seu fornecedor diferem significativamente no teor de cálcio. Há um grande número de lotes atualmente no depósito. Cinco deles são selecionados aleatoriamente para estudo. O químico faz cinco determinações em cada lote e obtém os dados:
 
 ```{r}
@@ -33,7 +36,7 @@ ggplot(data = calcio, mapping = aes(x = lote, y = calcio)) +
 ```
 
 A ANOVA faz a comparação das médias de várias populações independentes, assumindo que o efeito da variável resposta (quantitativa) $\textbf{Y}$ é devida aos fatores qualitativos $\textbf{X}$, e identificando se os fatores diferem entre si.
-Contudo a ANOVA é um teste paramétrico com pressupostos: de normalidade dos resíduos e homogeneidade da variância.
+Contudo a ANOVA é um teste paramétrico com pressupostos: de normalidade dos resíduos e homocedasticidade da variância.
 
 Para validar a normalidade dos resíduos do modelo, podemos analisar graficamente ou por meio de testes como o Teste Shapiro-Wilk que tem por hipótese nula que os dados são distribuidos pela normal. Como o valor de p não é significativo não rejeitamos a hipótese de normalidade dos resíduos.
 
@@ -43,11 +46,10 @@ anova <- aov(calcio ~ lote, data = calcio)
 shapiro.test(residuals(anova))
 ```
 
-O segundo pressuposto a ser atendido é o de homogeneidade das variâncias, e uma das formas de verificar isso é por meio do Teste de Bartlett com $H_0$ que todas as k população tem variância igual. Como o valor de p não é significativo não rejeitamos a hipótese de homogeneidade das variâncias.
+O segundo pressuposto a ser atendido é o de homocedasticidade das variâncias, e uma das formas de verificar isso é por meio do Teste de Bartlett com $H_0$ que todas as k população tem variância igual. Como o valor de p não é significativo não rejeitamos a hipótese de homocedasticidade das variâncias.
 
 ```{r}
 bartlett.test(calcio ~ lote, data = calcio)
-leveneT
 ```
 
 Tendo os pressupostos do modelo ANOVA atendidos, proceguimos com a análise e notamos que o valor de p é significativo levando a rejeitar a hipótese nula de que não há diferença significativa entre os grupos, logo pelo menos um par se difere. 
@@ -64,3 +66,41 @@ tukey$groups
 ```
 
 Quando duas médias são iguais elas recebem uma mesma letra em comum, logo podemos notar que os lotes 3 e 2 são significativamente diferentes dos lotes 4 e 5. 
+
+
+### Problema 2
+
+O tempo de resposta em milissegundos foi determinado para três tipos diferentes de circuitos que podem ser usados em um mecanismo automático de fechamento de válvula. Os resultados de um experimento completamente aleatório são mostrados a seguir:
+
+```{r}
+rm(list = ls())
+circuito <- data.frame(tipo = c(rep(1,5), rep(2,5), rep(3,5)), tempo = c(9,12,10,8,15,20,21,23,17,30,6,5,8,16,7))
+circuito$tipo <- factor(circuito$tipo)
+```
+
+Teste a hipótese de que os três tipos de circuito têm o mesmo tempo de resposta. Usar $\alpha$ = 0,01.
+
+Para analisar se o tempo de resposta dos 3 tipos de circuitos se diferem primeiro fazemos a análise gráfica 
+
+```{r}
+library(ggplot2)
+ggplot(data = circuito, mapping = aes(x = tipo, y = tempo)) + 
+  geom_boxplot(fill = "grey")
+```
+
+Verificamos se os pressupostos da ANOVA, de normalidade dos resíduos e de homocedasticidade da variância, são atendidos. Ao nível $\alpha$=0,01 de significância não rejeitamos as hipóteses nulas, com isso os pressupostos são atendidos.
+
+```{r}
+anova <- aov(tempo ~ tipo, data = circuito)
+shapiro.test(residuals(anova))
+bartlett.test(tempo~tipo, data = circuito)
+```
+
+Analisando o resultado do modelo da ANOVA rejeitamos a hipótese da média dos tratamentos não se diferenciarem, e para identificar quais tratamentos par a par se diferem fazemos o teste de Tukey. Por meio deste teste vemos que a média dos tipos de circuito 1 e 3 não se diferem entre si.
+
+```{r}
+summary(anova)
+tukey <- HSD.test(anova, trt = 'tipo')
+tukey$groups
+```
+

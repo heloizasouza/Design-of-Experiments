@@ -1,0 +1,129 @@
+---
+title: "Delineamento de blocos casualizados"
+author: "Heloiza de Oliveira"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## ANOVA e Teste Tukey de um Delineamento de blocos casualizados
+
+
+### Problema 1
+
+Um químico deseja testar o efeito de 4 agentes químicos na força de um tipo particular de tecido. Porque pode haver variabilidade de um rolo de pano para outro, o químico decide usar o delineamento de blocos casualizados, em que os rolos de tecido são considerados os blocos. Ele selecionou 5 rolos e aplicou em ordem aleatória os 4 agentes químicos para cada rolo. O resultado das resistências a tração foram obtidos.
+
+```{r}
+rm(list = ls())
+
+quimicos <- data.frame(agente = factor(c(rep(1,5), rep(2,5), rep(3,5), rep(4,5))), 
+                       bloco = factor(rep(1:5, 4)), 
+                       forca = c(73,68,74,71,67,73,67,75,72,70,75,
+                                 68,78,73,68,73,71,75,75,69))
+```
+
+Analisando graficamente por meio do boxplot o comporamento dos dados notamos uma diferença na variabilidade dos dados por agente químico, e para verificar se isso realmente acontece, mesmo levando em consideração a variabilidade dos rolos fazemos a ANOVA.
+
+```{r}
+library(ggplot2)
+ggplot(data = quimicos, mapping = aes(x = agente, y = forca)) +
+  geom_boxplot() + xlab("Agente químico") + ylab("Resistência a tração")
+
+```
+
+Para analisar os resultados da ANOVA validamos se os pressupostos de normalidade dos resíduos e homocedasticidade das variâncias são atendidos, e analisando tanto graficamente quanto por teste notamos que o conjunto de dados não atende a normalidade dos resíduos, mas atende a homocedasticidade das variâncias.
+
+
+```{r}
+anova <- aov(forca~agente+bloco, quimicos)
+
+# normalidade dos resíduos
+qqnorm(residuals(anova))
+qqline(residuals(anova))
+shapiro.test(residuals(anova))
+
+# homocedasticidade das variâncias
+boxplot(anova$residuals~quimicos$agente)
+bartlett.test(residuals(anova)~quimicos$agente)
+```
+
+Os resultados da ANOVA sugerem que a média dos diferentes agentes químicos não diferem entre si.
+
+```{r}
+summary(anova)
+```
+
+
+### Problema 2
+
+Três diferentes soluções de limpeza estão sendo comparadas para estudar sua eficácia no retardamento do crescimento de bactérias em 5 galões de leite. A análise é feita em laboratório, e apenas 3 testes podem ser feitos em qualquer dia. Porque os dias podem representar uma potencial fonte de variabilidade, o pesquisador decide usar o delineamento de blocos casualizados. Observações são tomadas por 4 dias, e os dados são mostrados a seguir.
+
+```{r}
+rm(list = ls())
+
+solucoes <- data.frame(solucao = factor(c(rep(1,4), rep(2,4), rep(3,4))), dias = factor(c(rep(1:4,3))), bacterias = c(13,22,18,39,16,24,17,44,5,4,1,22))
+
+library(ggplot2)
+ggplot(data = solucoes, mapping = aes(x = solucao, y = bacterias)) + geom_boxplot()
+```
+
+
+A análise gráfica sugere que a solução 3 pode ser diferente das outras duas, para verificar isso fazemos a análise das variâncias.
+
+```{r}
+anova <- aov(bacterias~solucao+dias, data = solucoes)
+
+# normalidade dos resíduos
+qqnorm(residuals(anova))
+qqline(residuals(anova))
+shapiro.test(residuals(anova))
+
+# homocedasticidade das variâncias
+boxplot(anova$residuals, solucoes$solucao)
+bartlett.test(bacterias~solucao, data = solucoes)
+
+summary(anova)
+```
+
+Por meio da análise gráfica e dos testes os pressupostos da anova de normalidade dos resíduos e homocedasticidade da variância foram atendidos, e os resultados da análise da variância sugerem que a média dos tratamentos de solução de limpeza se diferem em pelo menos um par. 
+
+```{r}
+tukey <- HSD.test(anova, trt = 'solucao')
+tukey$groups
+```
+
+Com a análise do resultado do teste de tukey sabemos que a média da solução de limpeza 3 se difere significativamente das outras soluções, sendo a que apresenta menor média de retardamento do crescimento de bactérias em galões de leite.
+
+
+### Problema 3
+
+Uma companhia de produtos de consumo conta com mensagens diretas de e-mail de marketing como um componente importante de suas campanhas publicitárias. A companhia tem 3 designs diferentes para uma nova brochadura e queremos avaliar sua eficácia, como existem diferenças substancias nos custos entre entre os 3 designs. A companhia decide testar os 3 designs enviando 5000 amostras de cada um para clientes potenciais em 4 regiões diferentes do país. Uma vez que são conhecidas as diferentes regiões na base de clientes, as regiões são cosideradas como blocos. O número de respostas de cada email é dado por:
+
+```{r}
+rm(list = ls())
+
+respostas <- data.frame(design = factor(c(rep(1,4), rep(2,4), rep(3,4))), regiao = factor(rep(c('NE', 'NW', 'SE', 'SW'),3)), resp = c(250,350,219,375,400,525,390,580,275,340,200,310))
+
+library(ggplot2)
+ggplot(data = respostas, mapping = aes(x = design, y = resp)) + geom_boxplot()
+```
+
+A análise gráfica sugere que o design de emails 2 tem média diferente se comparada a dos outros, para verificar se isso ocorre fazemos a análise da variância, os pressupostos de normalidade dos resíduos e de homocedasticidade da variância são mantidos.
+
+```{r}
+anova <- aov(resp~design+regiao, data = respostas)
+
+shapiro.test(residuals(anova))
+bartlett.test(anova$residuals~respostas$design)
+```
+
+Os resultados da análise da variância sugerem que a média do número de respostas aos emails se diferem pra cada tipo de design utilizado, pelo teste de Tukey a suposição levantada com a análise gráfica pode ser validada a média do número de respostas aos emails com o design 2 é maior e significativamente diferente dos outros designs.
+
+```{r}
+summary(anova)
+tukey <- HSD.test(anova, trt = 'design')
+tukey$groups
+```
+
