@@ -17,10 +17,10 @@ Um fabricante suspeita que os lotes de matéria-prima fornecidos por seu fornece
 
 ```{r}
 
-calcio <- data.frame(lote = c(rep('lote 1',5), rep('lote 2',5), rep('lote 3',5), rep('lote 4',5), rep('lote 5',5)),
+material <- data.frame(lote = c(rep('lote 1',5), rep('lote 2',5), rep('lote 3',5), rep('lote 4',5), rep('lote 5',5)),
                      calcio = c(23.46,23.48,23.56,23.39,23.40,23.59,23.56,23.42,23.49,23.50,23.51,23.64,23.46,23.52,23.49,23.28,23.40,23.37,23.46,23.39,23.29,23.46,23.37,23.32,23.38))
 
-calcio$lote <- factor(calcio$lote)
+material$lote <- factor(material$lote)
 ```
 
 Existe variação significativa no teor de cálcio de
@@ -31,25 +31,37 @@ A fim de visualizar a distribuição do teor de cálcio por cada lote examinado,
 ```{r}
 library(ggplot2)
 
-ggplot(data = calcio, mapping = aes(x = lote, y = calcio)) +
+ggplot(data = material, mapping = aes(x = lote, y = calcio)) +
   geom_boxplot(fill = "grey")
 ```
 
+$\textbf{Pressupostos da ANOVA}$
 A ANOVA faz a comparação das médias de várias populações independentes, assumindo que o efeito da variável resposta (quantitativa) $\textbf{Y}$ é devida aos fatores qualitativos $\textbf{X}$, e identificando se os fatores diferem entre si.
 Contudo a ANOVA é um teste paramétrico com pressupostos: de normalidade dos resíduos e homocedasticidade da variância.
 
 Para validar a normalidade dos resíduos do modelo, podemos analisar graficamente ou por meio de testes como o Teste Shapiro-Wilk que tem por hipótese nula que os dados são distribuidos pela normal. Como o valor de p não é significativo não rejeitamos a hipótese de normalidade dos resíduos.
 
 ```{r}
-anova <- aov(calcio ~ lote, data = calcio)
+anova <- aov(calcio ~ lote, data = material)
 
+# normalidade dos resíduos
+  # teste
 shapiro.test(residuals(anova))
+  # gráfico
+qqnorm(residuals(anova))
+qqline(residuals(anova))
 ```
 
 O segundo pressuposto a ser atendido é o de homocedasticidade das variâncias, e uma das formas de verificar isso é por meio do Teste de Bartlett com $H_0$ que todas as k população tem variância igual. Como o valor de p não é significativo não rejeitamos a hipótese de homocedasticidade das variâncias.
 
 ```{r}
+# homocedasticidade da variância
+  # teste
 bartlett.test(calcio ~ lote, data = calcio)
+
+  # gráfico
+plot(x = fitted(anova), y = residuals(anova))
+abline(h = 0)
 ```
 
 Tendo os pressupostos do modelo ANOVA atendidos, proceguimos com a análise e notamos que o valor de p é significativo levando a rejeitar a hipótese nula de que não há diferença significativa entre os grupos, logo pelo menos um par se difere. 
@@ -80,7 +92,7 @@ circuito$tipo <- factor(circuito$tipo)
 
 Teste a hipótese de que os três tipos de circuito têm o mesmo tempo de resposta. Usar $\alpha$ = 0,01.
 
-Para analisar se o tempo de resposta dos 3 tipos de circuitos se diferem primeiro fazemos a análise gráfica 
+Para analisar se o tempo de resposta dos 3 tipos de circuitos se diferem primeiro fazemos a análise gráfica.
 
 ```{r}
 library(ggplot2)
