@@ -33,8 +33,7 @@ ggplot(data = quimicos, mapping = aes(x = agente, y = forca)) +
 
 ```
 
-Para analisar os resultados da ANOVA validamos se os pressupostos de normalidade dos resíduos e homocedasticidade das variâncias são atendidos, e analisando tanto graficamente quanto por teste notamos que o conjunto de dados não atende a normalidade dos resíduos, mas atende a homocedasticidade das variâncias.
-
+Para analisar os resultados da ANOVA validamos se os pressupostos de normalidade dos resíduos e homocedasticidade das variâncias são atendidos, e analisando tanto graficamente quanto por teste notamos que para o modelo em estudo os resíduos são normalmente distribuídos à um nível $\alpha$=1% de significância, bem como atende a hipótese de homocedasticidade das variâncias.
 
 ```{r}
 anova <- aov(forca~agente+bloco, quimicos)
@@ -77,11 +76,12 @@ anova <- aov(bacterias~solucao+dias, data = solucoes)
 
 # normalidade dos resíduos
 qqnorm(residuals(anova))
-qqline(residuals(anova))
+qqline(residuals(anova), col='blue')
 shapiro.test(residuals(anova))
 
 # homocedasticidade das variâncias
-boxplot(anova$residuals, solucoes$solucao)
+plot(fitted(anova), residuals(anova))
+abline(h = 0, col='blue')
 bartlett.test(bacterias~solucao, data = solucoes)
 
 summary(anova)
@@ -115,8 +115,14 @@ A análise gráfica sugere que o design de emails 2 tem média diferente se comp
 ```{r}
 anova <- aov(resp~design+regiao, data = respostas)
 
+  # normalidade dos resíduos
 shapiro.test(residuals(anova))
-bartlett.test(anova$residuals~respostas$design)
+qqnorm(residuals(anova))
+qqline(residuals(anova), col='blue')
+   # homocedasticidade da variância
+plot(fitted(anova), residuals(anova))
+abline(h=0, col='blue')
+bartlett.test(resp~design, data=respostas)
 ```
 
 Os resultados da análise da variância sugerem que a média do número de respostas aos emails se diferem pra cada tipo de design utilizado, pelo teste de Tukey a suposição levantada com a análise gráfica pode ser validada a média do número de respostas aos emails com o design 2 é maior e significativamente diferente dos outros designs.
