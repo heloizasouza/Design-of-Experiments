@@ -1,0 +1,163 @@
+---
+title: "TwoWay_anova"
+author: "Heloiza de Oliveira"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## ANOVA de dois fatores em experimentos fatoriais 
+
+### Delineamento inteiramente ao acaso
+
+
+##### Problema 1
+
+ O rendimento de um processo químico está sendo estudado. As duas variáveis mais importantes são consideradas a pressão (psig) e a temperatura (°C). Três níveis de cada fator são selecionados, e um experimento fatorial com duas repetições é realizado. Os dados de rendimento são os seguintes:
+
+```{r}
+rm(list = ls())
+
+quimico <- data.frame(temp = factor(c(rep(150,6), rep(160,6), rep(170,6))),
+                      pres = factor(rep(c(rep(200,2),rep(215,2),rep(230,2)),3)),
+                      rend = c(90.4,90.2,90.7,90.6,90.2,90.4,90.1,90.3,90.5,
+                               90.6,89.9,90.1,90.5,90.7,90.8,90.9,90.4,90.1))
+
+```
+
+Tendo o rendimento do processo químico sendo afetado pela temperatura e pressão é interessante de se visualizar como a média desses fatores estão se comportando, pelo gráfico Box Plot é possível visualizar que tanto entre as diferentes temperaturas quanto entre os níveis de pressão o rendimento está se diferenciando. A partir dessas primeiras impressões a análise da variância vai ser feita.
+
+```{r}
+library(ggplot2)
+
+ggplot(data = quimico, mapping = aes(x = temp,y = rend, fill = pres)) + geom_boxplot()
+```
+
+Para fazer a análise da variância de dois fatores alguns pressupostos devem ser atendidos, sendo eles o pressuposto de normalidade da variável resposta, o pressuposto de homogeneidade da variância dos fatores e o pressuposto de independência entre as variáveis explicativas. Todos os pressupostos da ANOVA foram atendidos pelos testes de Shapiro-Wilk, Bartlett e Qui-quadrado.
+
+```{r}
+anova <- aov(rend~temp*pres, data = quimico)
+
+  # variable normatility
+qqnorm(quimico$rend)
+qqline(quimico$rend, col='blue')
+shapiro.test(quimico$rend)
+  # homocedasticity of variance
+bartlett.test(rend~interaction(temp,pres), data = quimico)
+  # independence of variables
+chisq.test(table(quimico$temp, quimico$pres))
+```
+
+Para interpretar os resultados da ANOVA de dois fatores precisamos levar em consideração a $H_0$ de que a interação das variáveis explicativas não é significativa, se a mesma não for significativa os efeitos principais podem ser analisados separadamente, contudo se ela for significativa para o problema em questão os efeitos principais não são passíveis de interpretação separadamente e então a interação entre as variáveis que deve ser interpretada.
+
+Para a análise da variabilidade no rendimento do processo químico notamos que a hipótese nula da interação entre a temperatura e a pressão não é significativa para explicar a variabilidade do processo, logo podemos fazer a análise dos efeitos principais separadamente. 
+
+```{r}
+summary(anova)
+```
+
+A análise dos efeitos principais das variáveis explicativas pode ser feita por meio da diferença mínima significativa do Teste de Tukey, com ele podemos verificar quais níveis dos fatores têm média significativamente diferente dos outros. 
+A temperatura de 150°C não se difere significativamente das outras temperaturas, já a pressão de 25 psig é a única que se diferencia signicativamente dentre as pressões testadas. 
+
+```{r}
+# efeito principasl da temperatura
+tukey_temp <- HSD.test(y = quimico$rend, trt = quimico$temp,
+                       DFerror = anova$df.residual,
+                       MSerror = summary(anova)[[1]][4,3],
+                       alpha = 0.05, console = TRUE)
+
+# efeito principal da pressão
+tukey_pres <- HSD.test(y = quimico$rend, trt = quimico$pres,
+                       DFerror = anova$df.residual,
+                       MSerror = summary(anova)[[1]][4,3],
+                       alpha = 0.05, console = TRUE)
+```
+
+
+
+##### Problema 2
+
+Um engenheiro suspeita que o acabamento superficial de uma peça de metal é influenciado pela taxa de avanço e pela profundidade de corte. Ele seleciona três taxas de avanço e quatro profundidades de corte. Ele então conduz um experimento fatorial e obtém:
+
+```{r}
+metal <- data.frame(taxa = factor(c(rep(0.20,12), rep(0.25,12), rep(0.30,12))), 
+                    corte = factor(rep(c(rep(0.15,3), rep(0.18,3), 
+                                         rep(0.20,3), rep(0.25,3)),3)),
+                    acabam = c(74,64,60,79,68,73,82,88,92,99,104,96,92,
+                               86,88,98,104,88,99,108,95,104,110,99,99,
+                               98,102,104,99,95,108,110,99,114,111,107))
+
+ggplot(data = metal, mapping = aes(x = taxa, y = acabam, fill = corte)) + 
+  geom_boxplot() + xlab("taxa de avanço") + ylab("acabamento superficial")
+```
+
+Ao analisar a dispersão dos dados notamos que ao aumentar a profundidade de corte o acabamento superficial tende a aumentar, isso em todas as taxas de avanço. Para maior precisão na análise a ANOVA é conduzida.
+
+Para conduzir essa análise os pressupostos devem ser atendidos, para tal o Teste de normalidade Shapiro-Wilk é realizado sob hipótese nula de que a variável resposta acabamento superficial é normalmente distribuida e é rejeitada a hipótese nula ao nível $\alpha=5$%, a análise gráfica complementa essa conclusão ao mostrar como as observações tanto das extremidades quanto centrais se distanciam da reta de normalidade.
+O pressuposto de homocedasticidade têm sob $H_0$ a hipótese de que há homogeneidade das variâncias, e dado o valor de p não significativo a $H_0$ não é rejeitada. E o pressuposto de independência das variáveis explicativas sob $H_0$ das variáveis serem independentes não é rejeitado para os dados de estudo.
+
+```{r}
+anova2 <- aov(acabam~taxa*corte, data = metal)
+
+# pressupostos:
+  # normalidade da variável resposta
+shapiro.test(metal$acabam)
+qqnorm(metal$acabam)
+qqline(metal$acabam, col='blue')
+  # homogeneidade das variâncias
+bartlett.test(acabam~interaction(taxa,corte), data = metal)
+  # independência das variáveis explicativas
+chisq.test(table(metal$taxa, metal$corte))
+```
+
+Se a análise dos resultados da ANOVA pudessem ser utilizados levariamos em consideração que a hipótese nula da interação dos tratamentos não ser significativa não foi rejeitada à um nível $\alpha$=5%, logo os efeitos principais não podem ser analisados separadamente, e se faz necessária a análise de todas as interações. Contudo como o pressuposto de normalidade não foi atendido, a ANOVA não é recomendada.
+
+Uma alternativa não paramétrica à ANOVA é o Teste de Kruskal-Wallis, sob $H_0$ de que as amostras testadas são oriundas da mesma população, e para este teste a hipótese nula foi rejeitada à um nível de 5% de significância, o que significa ter uma diferença significativa entre a média dos tratamentos de taxa de avanço e profundidade do corte. A análise Post Hoc complementa os resultados apresentando quais tratamentos são significativamente diferentes dentre si. 
+
+```{r}
+summary(anova2)
+
+kruskal(y = metal$acabam, trt = interaction(metal$taxa,metal$corte), console = T)
+```
+
+
+
+##### Problema 3
+
+Um artigo no Industrial Quality Control (1956, pp.5–8) descreve um experimento para investigar o efeito do tipo de vidro e do tipo de fósforo no brilho de um tubo de televisão. A variável de resposta é a corrente necessária (em microamperes) para obter um nível de correção especificado. Os dados são os seguintes:
+
+```{r}
+tv <- data.frame(vidro = factor(c(rep(1,9), rep(2,9))),
+                 fosforo = factor(rep(c(rep(1,3), rep(2,3), rep(3,3)),2)),
+                 corrent = c(280,290,285,300,310,295,290,285,290,230,235,240,260,240,235,220,225,230))
+
+ggplot(data = tv, mapping = aes(x = vidro, y = corrent, fill = fosforo)) + 
+  geom_boxplot() + xlab("Tipo de vidro") + ylab("Corrente")
+```
+
+Pela análise gráfica podemos notar que os tipos de vidro têm médias de corrente diferentes, e mesmo entre os tipos de fósforos as medidas se diferenciam relativamente.
+
+Ao checar os pressupostos da ANOVA temos que apenas o de normalidade da variável resposta não foi atendido, portanto o melhor é proceguir com o teste não paramétrico de Kruskal-Wallis.
+
+```{r}
+# modelo
+anova3 <- aov(corrent~vidro*fosforo, data = tv)
+
+# pressupostos
+  #normalidade da variável resposta
+shapiro.test(tv$corrent)
+  #homogeneidade das variâncias
+bartlett.test(corrent~interaction(vidro,fosforo), data=tv)
+  #independência das variáveis explicativas
+chisq.test(table(tv$vidro, tv$fosforo))
+
+# análise
+summary(anova3)
+kruskal(y = tv$corrent, trt = interaction(tv$vidro,tv$fosforo), console = T)
+```
+
+
+
+#O TESTE DE KRUSKAL-WALLIS PARA UM MODELO DE 2 FATORES TESTA A INTERAÇÃO??
