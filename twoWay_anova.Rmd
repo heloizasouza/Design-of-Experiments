@@ -1,11 +1,12 @@
 ---
-title: "TwoWay_anova"
+title: "Two Way ANOVA"
 author: "Heloiza de Oliveira"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(agricolae)
 ```
 
 ## ANOVA de dois fatores em experimentos fatoriais 
@@ -35,16 +36,18 @@ library(ggplot2)
 ggplot(data = quimico, mapping = aes(x = temp,y = rend, fill = pres)) + geom_boxplot()
 ```
 
-Para fazer a análise da variância de dois fatores alguns pressupostos devem ser atendidos, sendo eles o pressuposto de normalidade da variável resposta, o pressuposto de homogeneidade da variância dos fatores e o pressuposto de independência entre as variáveis explicativas. Todos os pressupostos da ANOVA foram atendidos pelos testes de Shapiro-Wilk, Bartlett e Qui-quadrado.
+Para fazer a análise da variância de dois fatores alguns pressupostos devem ser atendidos, sendo eles o pressuposto de normalidade dos resíduos do modelo e o pressuposto de homogeneidade da variância. Todos os pressupostos da ANOVA foram atendidos pelos testes de Shapiro-Wilk e Bartlett.
 
 ```{r}
 anova <- aov(rend~temp*pres, data = quimico)
 
   # variable normatility
-qqnorm(quimico$rend)
-qqline(quimico$rend, col='blue')
+qqnorm(residuals(anova))
+qqline(residuals(anova), col='blue')
 shapiro.test(quimico$rend)
   # homocedasticity of variance
+plot(fitted(anova), residuals(anova))
+abline(h=0, col='blue')
 bartlett.test(rend~interaction(temp,pres), data = quimico)
   # independence of variables
 chisq.test(table(quimico$temp, quimico$pres))
@@ -95,34 +98,92 @@ ggplot(data = metal, mapping = aes(x = taxa, y = acabam, fill = corte)) +
 
 Ao analisar a dispersão dos dados notamos que ao aumentar a profundidade de corte o acabamento superficial tende a aumentar, isso em todas as taxas de avanço. Para maior precisão na análise a ANOVA é conduzida.
 
-Para conduzir essa análise os pressupostos devem ser atendidos, para tal o Teste de normalidade Shapiro-Wilk é realizado sob hipótese nula de que a variável resposta acabamento superficial é normalmente distribuida e é rejeitada a hipótese nula ao nível $\alpha=5$%, a análise gráfica complementa essa conclusão ao mostrar como as observações tanto das extremidades quanto centrais se distanciam da reta de normalidade.
-O pressuposto de homocedasticidade têm sob $H_0$ a hipótese de que há homogeneidade das variâncias, e dado o valor de p não significativo a $H_0$ não é rejeitada. E o pressuposto de independência das variáveis explicativas sob $H_0$ das variáveis serem independentes não é rejeitado para os dados de estudo.
+Para conduzir essa análise os pressupostos devem ser atendidos, para tal o Teste de normalidade Shapiro-Wilk é realizado sob hipótese nula de que os resíduos do modelo são normalmente distribuidos e ao nível de significância de 5% a hipótese não é rejeitada, a análise gráfica complementa essa conclusão ao mostrar como as observações centrais se aproximam da reta de normalidade.
+O pressuposto de homocedasticidade têm sob $H_0$ a hipótese de que há homogeneidade nas variâncias, e dado o valor de p não significativo a $H_0$ não é rejeitada. E o pressuposto de independência das variáveis explicativas sob $H_0$ das variáveis serem independentes não é rejeitado para os dados de estudo.
 
 ```{r}
 anova2 <- aov(acabam~taxa*corte, data = metal)
 
 # pressupostos:
   # normalidade da variável resposta
-shapiro.test(metal$acabam)
-qqnorm(metal$acabam)
-qqline(metal$acabam, col='blue')
+shapiro.test(residuals(anova2))
+qqnorm(residuals(anova2))
+qqline(residuals(anova2), col='blue')
   # homogeneidade das variâncias
 bartlett.test(acabam~interaction(taxa,corte), data = metal)
+plot(fitted(anova2), residuals(anova2))
+abline(h=0, col='blue')
   # independência das variáveis explicativas
 chisq.test(table(metal$taxa, metal$corte))
 ```
 
-Se a análise dos resultados da ANOVA pudessem ser utilizados levariamos em consideração que a hipótese nula da interação dos tratamentos não ser significativa não foi rejeitada à um nível $\alpha$=5%, logo os efeitos principais não podem ser analisados separadamente, e se faz necessária a análise de todas as interações. Contudo como o pressuposto de normalidade não foi atendido, a ANOVA não é recomendada.
-
-Uma alternativa não paramétrica à ANOVA é o Teste de Kruskal-Wallis, sob $H_0$ de que as amostras testadas são oriundas da mesma população, e para este teste a hipótese nula foi rejeitada à um nível de 5% de significância, o que significa ter uma diferença significativa entre a média dos tratamentos de taxa de avanço e profundidade do corte. A análise Post Hoc complementa os resultados apresentando quais tratamentos são significativamente diferentes dentre si. 
+A interação dos tratamentos é significativa portanto não é possível analisar os efeitos principais separadamente, é necessária analisar a interação dos mesmos. Para isso primeiro se analisa a interação da  profundidade de corte dentro de cada taxa de avanço e depois se analisa a taxa de avanço dentro de cada profundidade de corte.
 
 ```{r}
 summary(anova2)
+```
 
-kruskal(y = metal$acabam, trt = interaction(metal$taxa,metal$corte), console = T)
+Ao analisar o efeito das taxas de avanço, com todas as profundidades de corte juntas, temos que a taxa de 0.2 in/min é a única significativa à um nível de significância de 5%.
+
+```{r}
+mod_inter <- aov(acabam ~ taxa/corte, data = metal)
+names(coef(mod_inter))[4:12]
+
+# estudando a profundidade de corte dentro de cada taxa de avanço
+summary(mod_inter, split = list("taxa:corte" = list("corte d. taxa 0.2" = c(1,4,7),
+                                                    "corte d. taxa 0.25" = c(2,5,8),
+                                                    "corte d. taxa 0.3" = c(3,6,9))))
+```
+
+Analisando o resultado do efeito da profundidade de corte, com todas as taxas de avanço juntas, temos que somente a profundidade de corte de 0.25 in não é significativa para o acamento da superfície do metal. Portanto as suspeitas do engenheiro podem ser sanadas ao verificarmos que a profundidade de corte de 0.25 in e a taxa de avanço de 0.25 e 0.30 não são significativas no acabamento da superfície da parte do metal testada. 
+
+```{r}
+# estudando a taxa de avanço dentro de cada profundidade
+
+mod_inter2 <- aov(acabam ~ corte/taxa, data=metal)
+names(coef(mod_inter2))[5:12]
+
+summary(mod_inter2, split = list("corte:taxa" = list("taxa d. corte 0.15" = c(1,5),
+                                                     "taxa d. corte 0.18" = c(2,6),
+                                                     "taxa d. corte 0.20" = c(3,7),
+                                                     "taxa d. corte 0.25" = c(4,8))))
+```
+
+Fazendo o Teste de comparações múltiplas de Tukey das profundidades de corte dentro de cada taxa de avanço observamos que para a taxa de avanço de 0.20 in/min as profundidades de corte de 0.18 e 0.15in não são significativamente diferentes entre si. Já para a taxa de avanço de 0.30in podemos notar pelo teste de Tukey que nenhuma das profundidades de corte são significativamente diferentes entre si.
+
+```{r}
+# profundidades de corte dentro da taxa de avanço de 0.20 in/min
+HSD.test(y = metal$acabam[metal$taxa == "0.2"],
+         trt = metal$corte[metal$taxa == "0.2"],
+         DFerror = anova2$df.residual, alpha = 0.05,
+         MSerror = summary(anova2)[[1]][4,3], group = TRUE,
+         console = TRUE)
+
+# profundidades de corte dentro da taxa de avanço de 0.30 in/min
+HSD.test(y = metal$acabam[metal$taxa == "0.3"], 
+         trt = metal$corte[metal$taxa == "0.3"],
+         DFerror = anova2$df.residual, alpha = 0.05, group = TRUE,
+         MSerror = summary(anova2)[[1]][4,3], console = TRUE)
+```
+
+Já ao fazermos o teste de comparações múltiplas para as taxas de avanço dentro de cada profundidade de corte começando pela profundidade de 0.18 in temos que as taxas de avanço de 0.3 e 0.25 não são significativamente diferentes, já ao analisar as taxas de avanço para a profundidade de corte de 0.25in notamos que a taxa de avanço de 0.25in não significativamente diferente das outras.
+
+```{r}
+# taxa de avanço dentro da profundidades de corte 0.18in
+HSD.test(y = metal$acabam[metal$corte == "0.18"], 
+         trt = metal$taxa[metal$corte == "0.18"],
+         DFerror = anova2$df.residual, alpha = 0.05, group = TRUE,
+         MSerror = summary(anova2)[[1]][4,3], console = TRUE)
+
+# taxa de avanço dentro da profundidades de corte 0.25in
+HSD.test(y = metal$acabam[metal$corte == "0.25"], 
+         trt = metal$taxa[metal$corte == "0.25"],
+         DFerror = anova2$df.residual, alpha = 0.05, group = TRUE,
+         MSerror = summary(anova2)[[1]][4,3], console = TRUE)
 ```
 
 
+A análise do resultado do teste de comparações múltiplas reforça a interpretação da significância das interações do modelo ANOVA de que a profundidade de corte de 0.25 in e as taxas de avanço de 0.25 e 0.30 não são significativas no acabamento da superfície da parte do metal.
 
 ##### Problema 3
 
@@ -137,9 +198,7 @@ ggplot(data = tv, mapping = aes(x = vidro, y = corrent, fill = fosforo)) +
   geom_boxplot() + xlab("Tipo de vidro") + ylab("Corrente")
 ```
 
-Pela análise gráfica podemos notar que os tipos de vidro têm médias de corrente diferentes, e mesmo entre os tipos de fósforos as medidas se diferenciam relativamente.
-
-Ao checar os pressupostos da ANOVA temos que apenas o de normalidade da variável resposta não foi atendido, portanto o melhor é proceguir com o teste não paramétrico de Kruskal-Wallis.
+Pela análise gráfica podemos notar que os tipos de vidro têm médias de corrente diferentes, e mesmo entre os tipos de fósforos as medidas se diferenciam relativamente. Para verificar se esses tratamentos têm mesmo influência na corrente elétrica necessária fazemos a análise da variância, para tal os pressupostos de normalidade dos resíduos, homogeneidade da variância e independência das variáveis foi atendido.
 
 ```{r}
 # modelo
@@ -147,17 +206,25 @@ anova3 <- aov(corrent~vidro*fosforo, data = tv)
 
 # pressupostos
   #normalidade da variável resposta
-shapiro.test(tv$corrent)
+shapiro.test(residuals(anova3))
   #homogeneidade das variâncias
+plot(fitted(anova3), residuals(anova3))
+abline(h=0, col='blue')
 bartlett.test(corrent~interaction(vidro,fosforo), data=tv)
   #independência das variáveis explicativas
 chisq.test(table(tv$vidro, tv$fosforo))
 
 # análise
 summary(anova3)
-kruskal(y = tv$corrent, trt = interaction(tv$vidro,tv$fosforo), console = T)
 ```
 
+A interação dos tratamentos de tipo de vidro e tipo de fósforo no brilho de um tubo de televisão não é significativa portanto os efeitos principais podem ser analisados separadamente. E por meio do Post Hoc de diferenças mínimas de Tukey temos que os tipos de fósforo 1 e 3 não são significativamente diferentes entre si.
 
+```{r}
+# efeito principal do tipo de fosforo
+tukey_fosf <- HSD.test(y = tv$corrent, trt = tv$fosforo, alpha = 0.05,
+                      DFerror = anova3$df.residual, console = T,
+                      MSerror = summary(anova3)[[1]][4,3]
+)
+```
 
-#O TESTE DE KRUSKAL-WALLIS PARA UM MODELO DE 2 FATORES TESTA A INTERAÇÃO??

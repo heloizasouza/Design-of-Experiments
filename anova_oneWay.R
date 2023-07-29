@@ -20,6 +20,8 @@ qqline(residuals(anova), col = 'blue')
 shapiro.test(residuals(anova))
 
   # homogeneity of variance
+plot(fitted(anova), residuals(anova))
+abline(h=0, col='blue')
 bartlett.test(obs~type, cars)
 
 # anova analysis
@@ -41,7 +43,12 @@ anova2 <- aov(proj~algor+bloc, data = resp)
   # residuals normality
 qqnorm(residuals(anova2))
 qqline(residuals(anova2), col='blue')
-shapiro.test(residuals(anova2))
+#shapiro.test(residuals(anova2))
+
+  # homogeneity of variance
+plot(fitted(anova2), residuals(anova2))
+abline(h=0, col='blue')
+#bartlett.test(proj~algor, data=resp)
 
 # anova analysis
 summary(anova2)
