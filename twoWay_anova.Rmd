@@ -49,8 +49,6 @@ shapiro.test(quimico$rend)
 plot(fitted(anova), residuals(anova))
 abline(h=0, col='blue')
 bartlett.test(rend~interaction(temp,pres), data = quimico)
-  # independence of variables
-chisq.test(table(quimico$temp, quimico$pres))
 ```
 
 Para interpretar os resultados da ANOVA de dois fatores precisamos levar em consideração a $H_0$ de que a interação das variáveis explicativas não é significativa, se a mesma não for significativa os efeitos principais podem ser analisados separadamente, contudo se ela for significativa para o problema em questão os efeitos principais não são passíveis de interpretação separadamente e então a interação entre as variáveis que deve ser interpretada.
@@ -85,6 +83,7 @@ tukey_pres <- HSD.test(y = quimico$rend, trt = quimico$pres,
 Um engenheiro suspeita que o acabamento superficial de uma peça de metal é influenciado pela taxa de avanço e pela profundidade de corte. Ele seleciona três taxas de avanço e quatro profundidades de corte. Ele então conduz um experimento fatorial e obtém:
 
 ```{r}
+rm(list = ls())
 metal <- data.frame(taxa = factor(c(rep(0.20,12), rep(0.25,12), rep(0.30,12))), 
                     corte = factor(rep(c(rep(0.15,3), rep(0.18,3), 
                                          rep(0.20,3), rep(0.25,3)),3)),
@@ -113,17 +112,15 @@ qqline(residuals(anova2), col='blue')
 bartlett.test(acabam~interaction(taxa,corte), data = metal)
 plot(fitted(anova2), residuals(anova2))
 abline(h=0, col='blue')
-  # independência das variáveis explicativas
-chisq.test(table(metal$taxa, metal$corte))
 ```
 
-A interação dos tratamentos é significativa portanto não é possível analisar os efeitos principais separadamente, é necessária analisar a interação dos mesmos. Para isso primeiro se analisa a interação da  profundidade de corte dentro de cada taxa de avanço e depois se analisa a taxa de avanço dentro de cada profundidade de corte.
+A interação dos tratamentos é significativa, num nível de 1% de significância, portanto não é possível analisar os efeitos principais separadamente, é necessária analisar a interação dos mesmos. Para isso primeiro se analisa a interação da  profundidade de corte dentro de cada taxa de avanço e depois se analisa a taxa de avanço dentro de cada profundidade de corte.
 
 ```{r}
 summary(anova2)
 ```
 
-Ao analisar o efeito das taxas de avanço, com todas as profundidades de corte juntas, temos que a taxa de 0.2 in/min é a única significativa à um nível de significância de 5%.
+Ao analisar o efeito das taxas de avanço, com todas as profundidades de corte juntas, temos que a taxa de 0.3 in/min é a única não significativa à um nível de significância de 1%.
 
 ```{r}
 mod_inter <- aov(acabam ~ taxa/corte, data = metal)
@@ -135,21 +132,7 @@ summary(mod_inter, split = list("taxa:corte" = list("corte d. taxa 0.2" = c(1,4,
                                                     "corte d. taxa 0.3" = c(3,6,9))))
 ```
 
-Analisando o resultado do efeito da profundidade de corte, com todas as taxas de avanço juntas, temos que somente a profundidade de corte de 0.25 in não é significativa para o acamento da superfície do metal. Portanto as suspeitas do engenheiro podem ser sanadas ao verificarmos que a profundidade de corte de 0.25 in e a taxa de avanço de 0.25 e 0.30 não são significativas no acabamento da superfície da parte do metal testada. 
-
-```{r}
-# estudando a taxa de avanço dentro de cada profundidade
-
-mod_inter2 <- aov(acabam ~ corte/taxa, data=metal)
-names(coef(mod_inter2))[5:12]
-
-summary(mod_inter2, split = list("corte:taxa" = list("taxa d. corte 0.15" = c(1,5),
-                                                     "taxa d. corte 0.18" = c(2,6),
-                                                     "taxa d. corte 0.20" = c(3,7),
-                                                     "taxa d. corte 0.25" = c(4,8))))
-```
-
-Fazendo o Teste de comparações múltiplas de Tukey das profundidades de corte dentro de cada taxa de avanço observamos que para a taxa de avanço de 0.20 in/min as profundidades de corte de 0.18 e 0.15in não são significativamente diferentes entre si. Já para a taxa de avanço de 0.30in podemos notar pelo teste de Tukey que nenhuma das profundidades de corte são significativamente diferentes entre si.
+Fazendo o Teste de comparações múltiplas de Tukey das profundidades de corte dentro de cada taxa de avanço observamos que para a taxa de avanço de 0.20 in/min as profundidades de corte de 0.18 e 0.15in não são significativamente diferentes entre si. Já para a taxa de avanço de 0.30in podemos notar pelo teste de Tukey que nenhuma das profundidades de corte são significativamente diferentes entre si, o que complementa a análise da interação da profundidade de corte dentro de cada taxa de avanço, visto que a taxa de avanço 0.30in não é significativa independentemente da profundidade de corte, como visto pelo modelo.
 
 ```{r}
 # profundidades de corte dentro da taxa de avanço de 0.20 in/min
@@ -159,11 +142,30 @@ HSD.test(y = metal$acabam[metal$taxa == "0.2"],
          MSerror = summary(anova2)[[1]][4,3], group = TRUE,
          console = TRUE)
 
+# profundidades de corte dentro da taxa de avanço de 0.25 in/min
+HSD.test(y = metal$acabam[metal$taxa == "0.25"], 
+         trt = metal$corte[metal$taxa == "0.25"],
+         DFerror = anova2$df.residual, alpha = 0.05, group = TRUE,
+         MSerror = summary(anova2)[[1]][4,3], console = TRUE)
+
 # profundidades de corte dentro da taxa de avanço de 0.30 in/min
 HSD.test(y = metal$acabam[metal$taxa == "0.3"], 
          trt = metal$corte[metal$taxa == "0.3"],
          DFerror = anova2$df.residual, alpha = 0.05, group = TRUE,
          MSerror = summary(anova2)[[1]][4,3], console = TRUE)
+```
+
+Analisando o resultado das taxas de avanço dentro da profundidade de corte, temos que somente a profundidade de corte de 0.25 in não é significativa para o acamento da superfície do metal.
+
+```{r}
+# estudando a taxa de avanço dentro de cada profundidade
+mod_inter2 <- aov(acabam ~ corte/taxa, data=metal)
+names(coef(mod_inter2))[5:12]
+
+summary(mod_inter2, split = list("corte:taxa" = list("taxa d. corte 0.15" = c(1,5),
+                                                     "taxa d. corte 0.18" = c(2,6),
+                                                     "taxa d. corte 0.20" = c(3,7),
+                                                     "taxa d. corte 0.25" = c(4,8))))
 ```
 
 Já ao fazermos o teste de comparações múltiplas para as taxas de avanço dentro de cada profundidade de corte começando pela profundidade de 0.18 in temos que as taxas de avanço de 0.3 e 0.25 não são significativamente diferentes, já ao analisar as taxas de avanço para a profundidade de corte de 0.25in notamos que a taxa de avanço de 0.25in não significativamente diferente das outras.
