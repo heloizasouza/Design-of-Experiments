@@ -1,0 +1,111 @@
+---
+title: "Ajuste de modelos"
+author: "Heloiza de Oliveira"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls())
+library(ggplot2)
+```
+
+## Ajuste de modelos de regressão simples ou polinomial
+
+
+
+##### Problema 1
+
+A resistência à tração do cimento Portland está sendo estudada. Quatro diferentes técnicas de mistura podem ser usadas de forma econômica. Foi conduzido um experimento inteiramente randomizado e os seguintes dados foram coletados:
+
+```{r}
+# dataset
+cimento <- data.frame(tecnica = c(rep(1,4), rep(2,4), rep(3,4), rep(4,4)), resistencia = c(3129,3000,2865,2890,3200,3300,2975,3150,2800,2900,2985,3050,2600,2700,2600,2765))
+cimento$tecnica_fator = factor(cimento$tecnica)
+
+# dispersão dos dados
+ggplot(data = cimento, mapping = aes(x = tecnica, y = resistencia)) + 
+  geom_point()
+
+# contrastes polinomiais
+contrasts(cimento$tecnica_fator) = contr.poly(4)
+
+# modelagem polinômios ortogonais
+mod_anova <- aov(resistencia ~ tecnica_fator, data = cimento)
+summary(mod_anova, split = list("tecnica_fator" = list("L"=1,"Q"=2,"C"=3)))
+
+# ajuste do modelo
+ggplot(data = cimento, mapping = aes(x = tecnica, y = resistencia)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", formula = y~I(x)+I(x^2))
+```
+
+
+
+
+
+##### Problema 2
+
+Um desenvolvedor de produto está investigando a resistência à tração de uma nova fibra sintética que será usada para fazer tecidos para camisas masculinas. A força é geralmente afetada pela porcentagem de algodão utilizado na mistura de materiais para a fibra. O engenheiro conduz um experimento completamente aleatório com cinco níveis de conteúdo de algodão e replica o experimento cinco vezes. O os dados são:
+
+```{r}
+# dataset
+algodao <- data.frame(percentual = c(rep(15,5),rep(20,5),rep(25,5),rep(30,5),rep(35,5)), resistencia = c(7,7,15,11,9,12,17,12,18,18,14,19,19,18,18,19,25,22,19,23,7,10,11,15,11))
+algodao$percentual_fator = factor(algodao$percentual)
+# dispersão dos dados
+ggplot(data = algodao, mapping = aes(x = percentual, y = resistencia)) +
+  geom_point()
+
+# contrastes
+contrasts(algodao$percentual_fator) = contr.poly(5)
+
+# modelo polinomial
+mod_anova = aov(resistencia ~ percentual_fator, data = algodao)
+summary(mod_anova, split = list("percentual_fator" = list("L"=1,"Q"=2,"C"=3,"^4"=4)))
+
+# ajuste do modelo
+ggplot(data = algodao, mapping = aes(x = percentual, y = resistencia)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~poly(x,3))
+
+```
+
+
+
+
+
+##### Problema 3
+
+Um fabricante de produtos farmacêuticos deseja investigar a bioatividade de um novo fármaco. Um completamente aleatório experimento de fator único foi conduzido com três dosagens níveis, e os seguintes resultados foram obtidos.
+
+```{r}
+# dataset
+droga <- data.frame(dosagem = c(rep(20,4),rep(30,4),rep(40,4)),
+                    obs = c(24,28,37,30,37,44,31,35,42,47,52,38))
+droga$dosagem_fator = factor(droga$dosagem)
+
+# dispersão dos dados
+ggplot(data = droga, mapping = aes(x = dosagem, y = obs)) +
+  geom_point()
+
+# modelo reduzido
+mod_reduced = lm(obs ~ dosagem, data = droga)
+# modelo completo
+mod_full = aov(obs ~ dosagem_fator, data = droga)
+
+# teste de ajuste do modelo
+anova(mod_reduced, mod_full) # DEVERIA TER REJEITADO H0, CERTO???
+
+# contrastes
+contrasts(droga$dosagem_fator) = contr.poly(3)
+
+# modelo
+mod_anova <- aov(obs ~ dosagem_fator, data = droga)
+summary(mod_anova, split = list("dosagem_fator"=list("L"=1,"Q"=2)))
+
+# ajuste do modelo
+ggplot(data = droga, mapping = aes(x = dosagem, y = obs)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+```
+
