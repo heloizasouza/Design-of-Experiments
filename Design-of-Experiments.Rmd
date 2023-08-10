@@ -1,0 +1,398 @@
+---
+title: "Planejamento e Análise de Experimentos"
+author: "Heloiza de Oliveira Souza"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(agricolae)
+```
+
+
+### Anova de 1 Fator
+
+
+##### *Delineamento Inteiramente ao Acaso*
+
+Um desenvolvedor de produto está investigando a resistência à tração de uma nova fibra sintética que será usada para fazer tecidos para camisas masculinas. A resistência geralmente é afetada pela porcentagem de algodão usada na mistura de materiais para a fibra. O engenheiro conduz um experimento completamente aleatório com cinco níveis de conteúdo de algodão e repete o experimento cinco vezes.
+
+
+```{r, warning=FALSE}
+rm(list = ls())
+
+# dados do problema
+camisa <- data.frame(algodao = factor(c(rep(15,5),rep(20,5),rep(25,5),
+                                        rep(30,5),rep(35,5))), 
+                     resistencia = c(7,7,15,11,9,12,17,12,18,18,
+                                     14,19,19,18,18,19,25,22,19,23,
+                                     7,10,11,15,11))
+
+# dispersão dos dados
+ggplot(data = camisa, mapping = aes(x = algodao, y = resistencia)) + 
+  geom_point() + xlab("Percentual de algodão %") + ylab("Resistência da camisa")
+```
+
+Para conduzir a análise desse experimento fazemos primeiramente uma análise visual do gráfico de dispersão dos dados a fim de visualizar se existe uma diferença média entre os níveis da variável explicativa de percentual de algodão, e como observado no gráfico de dispersão há indícios de uma diferenciação na resistência das camisas masculinas pelo percentual de algodão na mistura. Podemos concluir a respeito dessas suspeitas por meio da comparação das médias dos níveis de algodão.
+
+
+```{r, warning=FALSE}
+# modelo
+anova1 <- aov(formula = resistencia ~ algodao, data = camisa)
+summary(anova1)
+
+# post hoc
+HSD.test(y = anova1, trt = 'algodao',console = TRUE)
+```
+
+Utilizando a anova de 1 fator concluimos que como suspeita o percentual de algodão é de impacto significativo na resistência das camisas masculinas, e seu níveis diferem entre si, para identificar quais níveis são significativamente diferentes a análise post hoc pode ser conduzida, utilizando o teste de diferenças mínimas significativas de Tukey concluimos que dentre os níveis pelo menos 30% e 15% são significativamente diferentes entre si.
+
+
+
+##### *Delineamento de Blocos Casualizados*
+
+
+Um fabricante de ligas-mestre de alumínio produz refinadores de grãos na forma de lingotes. A empresa produz o produto em quatro fornos. Cada forno é conhecido por ter suas próprias características operacionais exclusivas, portanto, qualquer experimento realizado na fundição que envolva mais de um forno considerará os fornos como uma variável incômoda. Os engenheiros de processo suspeitam que a taxa de agitação afeta o tamanho do grão do produto. Cada forno pode funcionar em quatro taxas de agitação diferentes. Um projeto de bloco aleatório é executado para um refinador específico e os dados de tamanho de grão resultantes são os seguintes:
+
+
+```{r}
+rm(list = ls())
+
+refinadores <- data.frame(agitacao = factor(c(rep(5,4),rep(10,4),rep(15,4),rep(20,4))),
+                       forno = factor(rep(seq(1:4),4)),
+                       tamanho = c(8,4,5,6,14,5,6,9,
+                                   14,6,9,2,17,9,3,6))
+
+ggplot(data = refinadores, mapping = aes(x = agitacao, y = tamanho)) +
+  geom_boxplot() + xlab("Taxa de agitação") + ylab("Tamanho do grão")
+```
+
+A análise desse experimento tem por objetivo investigar se a taxa de agitação afeta o tamanho do grão, contudo o forno utilizado é uma variável a ser incluída no modelo a fim de controlar a implicância de sua variação no estudo, por tal motivo sendo o experimento conduzido como um delineamento em blocos aleatórios. 
+
+A dispersão dos dados aponta para uma possível variabilidade média entre os fornos, mas não entre as taxas de agitação, a anova de 1 fator comprova esse resultado devido a variável explicativa agitação não ser significativa à um nível de 5% de significância.
+
+```{r}
+# modelo
+anova2 <- aov(tamanho ~ agitacao + forno, data = refinadores)
+summary(anova2)
+```
+
+
+
+##### *Delineamento quadrado latino* 
+
+
+Num ensaio de alimentação de suínos usou-se um quadrado latino de 4 x 4, os resultados são referentes aos ganhos de peso, em kg, ao fim de 252 dias. Os tratamentos eram: A - Castração aos 56 dias de idade; B - Animais inteiros; C - Castração aos 7 dias de idade e D - Castração aos 21 dias. As colunas tinham o objetivo de controlar a variação de peso dos leitões dentro de cada leitegada. 
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+suinos <- data.frame(leitegada = factor(c(rep(1,4),rep(2,4),rep(3,4),rep(4,4))),
+                     coluna = factor(c(rep(1:4,4))),
+                     tratamento = factor(c('A','B','C','D','B','D','A','C',
+                                           'C','A','D','B','D','C','B','A')),
+                     peso = c(93.0,108.6,108.9,102.0,115.4,96.5,77.9,100.2,
+                              102.1,94.9,116.9,96.0,117.6,114.1,118.7,97.6))
+
+# dispersão dos dados
+ggplot(data = suinos, mapping = aes(x = tratamento, y = peso)) +
+  geom_boxplot()
+```
+
+A análise gráfica da dispersão dos dados do experimento com os suínos levanta suspeitas de uma diferença entre o tratamento A e os demais, contudo ao conduzir a anova de 1 fator, controlando a variação das outras variáveis pelo delinemaneto do quadrado latino, a variável explicativa de tratamentos é não significativa à um nível de 5% de significância. 
+A fim de reforçar essa conclusão o teste de diferenças mínimas significativas de Tukey é conduzido e mostra que de fato os 4 grupos de tratamento não são, em média, significativamete diferentes entre si.
+
+```{r}
+# modelo
+anova3 <- aov(formula = peso ~ leitegada + coluna + tratamento, data = suinos)
+summary(anova3)
+HSD.test(anova3, trt = 'tratamento', console = T)
+```
+
+
+
+### ANOVA de 2 Fatores
+
+
+##### *Delineamento inteiramente ao acaso com interação não significativa*
+
+Um experimento foi conduzido para determinar se a temperatura de queima ou a posição do forno afeta a densidade de cozimento de um ânodo de carbono. 
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+carbono <- data.frame(posicao = factor(c(rep(1,9),rep(2,9))),
+                      temperatura = factor(rep(c(rep(800,3),rep(825,3),rep(850,3)),2)),
+                      densidade = c(570,565,583,1063,1080,1043,565,510,590,
+                                    528,547,521,988,1026,1004,526,538,532))
+
+# dispersão dos dados
+ggplot(data = carbono, mapping = aes(x = temperatura, y = densidade, fill = posicao)) + 
+  geom_boxplot()
+```
+
+A análise gráfica da dispersão dos dados levanta suspeitas de que tanto a temperatura quanto a posição do forno afetam a densidade do carbono, devido aos diferentes níveis desses tratamentos observados no gráfico. Contudo para saber se a interação desses dois fatores é significativa é necessário conduzir uma análise da variância de dois fatores, o resultado do quadro da ANOVA mostra que a interação dos tratamentos não é significativa à um nível de 5% de significância, portanto uma análise dos efeitos principais separadamente pode ser conduzida. 
+
+```{r}
+anova4 <- aov(formula = densidade ~ posicao*temperatura, data = carbono)
+summary(anova4)
+```
+
+Pelo quadro da ANOVA do experimento sabemos que tanto a posição do forno quanto a temperatura de queima, à um nível de 5% de significância, são significativas na densidade de cozimento de um ânodo de carbono, para compreender melhor esse efeito uma análise post hoc pode ser conduzida, contudo a variável explicativa posição possuí apenas dois níveis, portanto fica fácil concluir que a posição 1 e 2 se diferem significativamente entre si.
+
+Já a temperatura de cozimento que apresenta 3 níveis diferentes pode ser analisada pelo teste de Tukey que nos mostra que a temperatura de 825°C é, em média, significativamente diferente das outras duas temperaturas, com maior média de densidade de cozimento do ânodo de carbono. 
+
+```{r}
+HSD.test(y = carbono$densidade, trt = carbono$temperatura, 
+         DFerror = anova4$df.residual,
+         MSerror = summary(anova4)[[1]][4,3], console = T)
+```
+
+
+##### *Delineamento inteiramente ao acaso com interação significativa*
+
+
+Um experimento é conduzido para estudar a influência de temperatura operacional e três tipos de vidro frontal na saída de luz de um tubo de osciloscópio.
+
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+luz <- data.frame(vidro = factor(c(rep(1,9), rep(2,9),rep(3,9))),
+                  temperatura = factor(rep(c(rep(100,3),rep(125,3),rep(150,3)),3)),
+                  resp = c(580,568,570,1090,1087,1085,1392,1380,1386,
+                           550,530,579,1070,1035,1000,1328,1312,1299,
+                           546,575,599,1045,1053,1066,867,904,889))
+
+# dispersão dos dados
+ggplot(data = luz, mapping = aes(x = vidro, y = resp, color = temperatura)) + geom_point()
+```
+
+A dispersão dos dados levanta hipóteses de que existe uma diferença significativa na saída de luz do tubo dentre os tipos de vidro, e alguma variação entre as temperaturas acima de 125°, para testar se a interação desses fatores tem influência é necessário conduzir uma análise da variância desse experimento. 
+
+```{r}
+# modelo
+anova5 <- aov(formula = resp ~ vidro*temperatura, data = luz)
+summary(anova5)
+```
+
+O quadro da ANOVA mostra que num nível de 5% de significância a interação dos tratamentos é significativa, logo o efeito principal dos fatores não podem ser analisados separadamente. Portando para conduzir o experimento é necessário que seja verificado o efeito de um tratamento dentro do outro  (ou seja, a interação dos mesmos). 
+Primeiramente analisamos o efeito do vidro dentro da temperatura, para isso obtemos um novo modelo da anova com essa condição sendo aplicada e fazemos uma nova análise dos resultados.
+
+```{r}
+# modelo do efeito do vidro dentro da temperatura
+anova5.1 <- aov(resp ~ temperatura/vidro, data = luz)
+names(coef(anova5.1))
+summary(anova5.1, split = list("temperatura:vidro" = list('vidro d. temp 100'=c(1,4),
+                                                          'vidro d. temp 125'=c(2,5),
+                                                          'vidro d. temp 150'=c(3,6))))
+```
+
+O quadro da ANOVA do modelo do efeito do vidro dentro dos níveis da temperatura mostram que, os tipos de vidro não têm uma diferença significativa dentro da temperatura de 100° visto que a interação nesse nível não é significativa, diferente dos outros dois níveis de temperatura que para um nível de 5% de significância possuem p-valor significativo. O resultado do quadro da ANOVA coincide com as hipóteses levantadas na análise gráfica, porém para complemento da análise um teste Post Hoc pode ser conduzido.
+
+```{r}
+# teste de tukey para o nível de temperatura de 125°
+HSD.test(y = luz$resp[luz$temperatura == '125'],
+         trt = luz$vidro[luz$temperatura == '125'],
+         DFerror = anova5$df.residual,
+         MSerror = summary(anova5)[[1]][4,3],
+         console = TRUE)
+
+# teste de tukey para o nível de temperatura de 150°
+HSD.test(y = luz$resp[luz$temperatura == '150'],
+         trt = luz$vidro[luz$temperatura == '150'],
+         DFerror = anova5$df.residual,
+         MSerror = summary(anova5)[[1]][4,3],
+         console = TRUE)
+```
+
+O teste de diferenças mínimas significativas de Tukey aponta que para o nível de temperatura de 125° os vidros do tipo 1 e 2 se diferem, em média, significativamente, com o vidro do tipo 2 apresentando menor média para a temperatura de 125°. Já o teste de Tukey para o nível de temperatura de 150° aponta que todos os tipos de vidro diferem, em média, significativamente entre si, sendo o tipo 3 de menor média.
+
+
+Para prosseguir com a análise fazemos agora o modelo para estudo do efeito da temperatura dentro dos níveis dos tipos de vidro.
+
+```{r}
+# modelo do efeito da temperatura dentro do vidro
+anova5.2 <- aov(resp ~ vidro/temperatura, data = luz)
+names(coef(anova5.2))
+summary(anova5.2, split = list("vidro:temperatura" = list('temp d. vidro 1'=c(1,4),
+                                                          'temp d. vidro 2'=c(2,5),
+                                                          'temp d. vidro 3'=c(3,6))))
+```
+
+A ANOVA do efeito da temperatura dentro dos níveis de vidro mostram que a saída de luz de um tubo de osciloscópio varia significativamente para cada tipo de vidro dependendo da temperatura observada, portando é necessário conduzir um teste Post Hoc de cada tipo de vidro para entender melhor o efeito da temperatura na variável resposta.
+
+```{r}
+# teste de tukey para o tipo de vidro 1
+HSD.test(y = luz$resp[luz$vidro == '1'],
+         trt = luz$temperatura[luz$vidro == '1'],
+         DFerror = anova5$df.residual,
+         MSerror = summary(anova5)[[1]][4,3],
+         console = TRUE)
+
+# teste de tukey para o tipo de vidro 2
+HSD.test(y = luz$resp[luz$vidro == '2'],
+         trt = luz$temperatura[luz$vidro == '2'],
+         DFerror = anova5$df.residual,
+         MSerror = summary(anova5)[[1]][4,3],
+         console = TRUE)
+
+# teste de tukey para o tipo de vidro 3
+HSD.test(y = luz$resp[luz$vidro == '3'],
+         trt = luz$temperatura[luz$vidro == '3'],
+         DFerror = anova5$df.residual,
+         MSerror = summary(anova5)[[1]][4,3],
+         console = TRUE)
+
+```
+
+O teste de diferenças mínimas significativas de Tukey aponta que para os três tipos de vidro a saída de luz de um tubo de osciloscópio difere de acordo com a temperatura, para o tipo de vidro 3 a maior média é na temperatura de 125°, para os outros dois a maior média da saída de luz é da temperatura 150°.
+
+
+
+### ANOVA de 3 Fatores
+
+##### *Delineamento inteiramente ao acaso com interação significativa*
+
+
+O departamento de controle de qualidade de uma fábrica de acabamento de tecidos está estudando o efeito de vários fatores no tingimento de tecido sintético de algodão usado para fabricar camisas masculinas.
+Três operadores, três tempos de ciclo e duas temperaturas foram selecionados, e três pequenos pedaços de tecido foram tingidos sob cada conjunto de condições. O tecido acabado foi comparado a um padrão e uma pontuação numérica foi atribuída. 
+
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+tecidos <- data.frame(ciclo = factor(c(rep(40,18),rep(50,18),rep(60,18))),
+                      operador = factor(rep(rep(c(rep(1,3), rep(2,3), rep(3,3)),2),3)),
+                      temperatura = factor(rep(c(rep(300,9), rep(350,9)),3)),
+                      nota = c(23,24,25,27,28,26,31,32,29,24,23,28,38,36,35,34,36,39,
+                               36,35,36,34,38,39,33,34,35,37,39,35,34,38,36,34,36,31,
+                               28,24,27,35,35,34,26,27,25,26,29,25,36,37,34,28,26,24))
+
+# dispersão dos dados
+ggplot(data = tecidos, mapping = aes(x = ciclo, y = nota, fill = operador, color = temperatura)) + 
+  geom_boxplot()
+
+ggplot(data = tecidos, mapping = aes(x = ciclo, y = nota, fill = operador)) + 
+  geom_boxplot() + facet_grid(cols = vars(temperatura))
+```
+
+A análise gráfica dos dados do problema nos leva a interpretar que existe uma diferença significativa entre os tratamentos utilizados, visto que comparando o comportamento dos dados para os dois níveis de temperatura temos outputs relativamente diferentes, e ao olhar dentro de uma temperatura tanto o tempo de ciclo quanto os operadores apresentam alguma diferença. Como a análise gráfica só levanta suspeitas do comportamento desse experimento um teste se faz necessário, para isso é conduzido a ANOVA de 3 fatores.
+
+Os resultados do quadro da ANOVA sugerem que ao nível de 5% de significância a interação dos três tratamentos; operadores, tempos de ciclo e temperaturas; são significativas, portanto uma análise post hoc deve ser conduzida para melhor interpretação.
+
+```{r}
+# modelos
+anova6 <- aov(formula = nota ~ ciclo*operador*temperatura, data = tecidos)
+summary(anova6)
+```
+
+
+
+### Teste de Falta de ajuste
+
+
+##### *Delineamento inteiramente ao acaso com teste de ajuste aceito*
+
+Um fabricante de produtos farmacêuticos deseja investigar a bioatividade de um novo fármaco. Um experimento completamente aleatório de fator único foi conduzido com três níveis de dosagens, e os seguintes resultados foram obtidos.
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+droga <- data.frame(dosagem = c(rep(20,4),rep(30,4),rep(40,4)),
+                    obs = c(24,28,37,30,37,44,31,35,42,47,52,38))
+droga$dosagem_fator = factor(droga$dosagem)
+
+# dispersão dos dados
+ggplot(data = droga, mapping = aes(x = dosagem, y = obs)) +
+  geom_point()
+```
+
+Podemos observar pelo gráfico de dispersão dos dados uma tendência linear crescente da bioatividade do novo fármaco acontece de acordo com o aumento da dosagem aplicada, para verificar se um modelo de regressão linear simples se ajusta bem aos dados do problema como a suspeita da análise gráfica apresenta, conduzimos um teste de falta de ajuste. 
+
+```{r}
+# modelos
+mod_reduced = lm(obs ~ dosagem, data = droga)
+mod_full = aov(obs ~ dosagem_fator, data = droga)
+
+# teste de ajuste do modelo
+anova(mod_reduced, mod_full)
+
+# ajuste do modelo
+ggplot(data = droga, mapping = aes(x = dosagem, y = obs)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+
+```
+
+Para realizar esse teste criamos o modelo de regressão linear simples reduzido e o modelo da anova de um fator como modelo completo, e então fazemos o teste, a hipótese nula desse teste é que o resíduo do ajuste é igual a zero caso um modelo de regressão linear simples explique bem a variabilidade dos dados, caso contrário a hipotese nula é rejeitada e uma investigação sobre o grau do polinômio deve ser conduzida caso necessário.
+
+Neste experimento, a hipótese nula não foi rejeitada, portanto um modelo de regressão linear simples se ajusta bem aos dados do problema como observado pelo gráfico de ajuste. 
+
+
+##### *Delineamento inteiramente ao acaso com teste de ajuste rejeitado*
+
+A resistência à tração do cimento Portland está sendo estudada. Quatro diferentes técnicas de mistura podem ser usadas economicamente. Um experimento completamente aleatório foi conduzido e os seguintes dados foram coletados:
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+cimento <- data.frame(tecnica = c(rep(1,4),rep(2,4),rep(3,4),rep(4,4)),
+                      resistencia = c(3129,3000,2865,2890,3200,3300,2975,3150,2800,2900,2985,3050,2600,2700,2600,2765))
+cimento$tecnica_fator <- factor(cimento$tecnica)
+
+# dispersão dos dados
+ggplot(data = cimento, mapping = aes(x = tecnica, y = resistencia)) + 
+  geom_point()
+
+# modelos
+mod_reduz <- lm(formula = resistencia ~ tecnica, data = cimento)
+mod_completo <- aov(formula = resistencia ~ tecnica_fator, data = cimento)
+
+# teste de ajuste
+anova(mod_reduz, mod_completo)
+```
+
+Ao nível de 5% de significância a hipótese nula de que os resíduos do ajuste do modelo de regressão são iguais a zero é rejeitada, portanto um modelo de regressão linear simples não explica bem a variação dos dados desse experimento.
+
+A fim de identificar o grau do polinômio que melhor se ajusta aos dados do problema o uso dos polinômios ortogonais é recomendável.
+
+```{r}
+# contrastes
+contrasts(cimento$tecnica_fator) = contr.poly(4)
+
+# modelo
+anova7 <- aov(formula = resistencia ~ tecnica_fator, data = cimento)
+summary(anova7, split = list("tecnica_fator" = list('L'=1,'Q'=2,'C'=3)))
+
+# ajuste do modelo
+ggplot(data = cimento, mapping = aes(x = tecnica, y = resistencia)) +
+  geom_point() + xlab("Tecnica de mistura") + ylab("Resistência a tração") +
+  geom_smooth(method = 'lm', formula = y~poly(x,2))
+```
+
+O quadro da ANOVA e o gráfico de ajuste de modelo mostram que o modelo de melhor ajuste aos dados é $y = \mu + \tau x + \beta x^2 + \epsilon$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

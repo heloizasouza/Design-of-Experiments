@@ -13,7 +13,6 @@ library(ggplot2)
 ## Ajuste de modelos de regressão simples ou polinomial
 
 
-
 ##### Problema 1
 
 A resistência à tração do cimento Portland está sendo estudada. Quatro diferentes técnicas de mistura podem ser usadas de forma econômica. Foi conduzido um experimento inteiramente randomizado e os seguintes dados foram coletados:
@@ -39,8 +38,6 @@ ggplot(data = cimento, mapping = aes(x = tecnica, y = resistencia)) +
   geom_point() + 
   geom_smooth(method = "lm", formula = y~I(x)+I(x^2))
 ```
-
-
 
 
 
@@ -72,13 +69,12 @@ ggplot(data = algodao, mapping = aes(x = percentual, y = resistencia)) +
 
 
 
-
-
 ##### Problema 3
 
 Um fabricante de produtos farmacêuticos deseja investigar a bioatividade de um novo fármaco. Um completamente aleatório experimento de fator único foi conduzido com três dosagens níveis, e os seguintes resultados foram obtidos.
 
 ```{r}
+rm(list = ls())
 # dataset
 droga <- data.frame(dosagem = c(rep(20,4),rep(30,4),rep(40,4)),
                     obs = c(24,28,37,30,37,44,31,35,42,47,52,38))
@@ -94,7 +90,7 @@ mod_reduced = lm(obs ~ dosagem, data = droga)
 mod_full = aov(obs ~ dosagem_fator, data = droga)
 
 # teste de ajuste do modelo
-anova(mod_reduced, mod_full) # DEVERIA TER REJEITADO H0, CERTO???
+anova(mod_reduced, mod_full)
 
 # contrastes
 contrasts(droga$dosagem_fator) = contr.poly(3)
@@ -106,6 +102,203 @@ summary(mod_anova, split = list("dosagem_fator"=list("L"=1,"Q"=2)))
 # ajuste do modelo
 ggplot(data = droga, mapping = aes(x = dosagem, y = obs)) +
   geom_point() +
+  geom_smooth(method = "lm", formula = y~x)
+```
+
+
+
+##### Problema 4
+
+Eu pertenço a um clube de golfe no meu bairro. Eu divido o ano em três temporadas de golfe: verão (junho a setembro), inverno (novembro a março) e outono (outubro, abril e maio). Acredito que jogo meu melhor golfe durante o verão (porque tem mais tempo e o percurso não está lotado) e no outono (porque o campo não está lotado), e meu pior golfe é durante o inverno (porque é quando todos os residentes de meio ano aparecem, o campo está lotado, o jogo é lento e fico frustrado). Os dados do último ano são mostrados na tabela a seguir: 
+
+
+```{r}
+rm(list = ls())
+
+golfe <- data.frame(estacoes = factor(c(rep("Verão",10),rep("Outono",7),rep("Inverno",8))),
+                    tacadas = c(83,85,85,87,90,88,88,84,91,
+                                90,91,87,84,87,85,86,83,94,
+                                91,87,85,87,91,92,86))
+golfe$estac_num <- c(rep(1,10),rep(2,7), rep(3,8)) # PODE FAZER ISSO AQUI?????
+
+# dispersão dos dados
+ggplot(data = golfe, mapping = aes(x = estacoes, y = tacadas)) + 
+  geom_point()
+
+# modelos
+mod_reduzido <- lm(tacadas ~ estac_num, data = golfe)
+mod_compl <- aov(tacadas ~ estacoes, data = golfe)
+
+# ajuste do modelo
+anova(mod_reduzido, mod_compl)
+
+# contrastes
+contrasts(x = golfe$estacoes) = contr.poly(3)
+
+mod_anova <- aov(tacadas ~ estacoes, data = golfe)
+summary(mod_anova, split = list("estacoes" = list("L"=1,"Q"=2))) # E AIIIII??????
+```
+
+
+
+##### Problema 5
+
+Uma companhia de ópera regional tentou três abordagens
+para solicitar doações de 24 potenciais patrocinadores. Os 24 potenciais patrocinadores foram aleatoriamente divididos em três grupos de oito, e uma abordagem foi usada para cada grupo. O dólar dos valores das contribuições resultantes são mostrados na tabela a seguir
+
+
+```{r}
+rm(list = ls())
+
+opera <- data.frame(approach = factor(c(rep(1,8),rep(2,8),rep(3,8))),
+                    approach_num = c(rep(1,8),rep(2,8),rep(3,8)),
+                    dollar = c(1000,1500,1200,1800,1600,1100,1000,1250,
+                               1500,1800,2000,1200,2000,1700,1800,1900,
+                               900,1000,1200,1500,1200,1550,1000,1100))
+
+# dispersão
+ggplot(data = opera, mapping = aes(x = approach, y = dollar)) +
+  geom_point()
+
+# contrastes
+contrasts(opera$approach) = contr.poly(3)
+
+# modelo
+mod_anova <- aov(dollar ~ approach, data = opera)
+summary(mod_anova, split = list("approach" = list("L"=1,"Q"=2)))
+
+# ajuste do modelo
+ggplot(data = opera, mapping = aes(x = approach_num, y = dollar)) + 
+  geom_point() + xlab("Approach") + ylab("Contributions $") +
+  geom_smooth(method = "lm", formula = y ~ I(x)+I(x^2))
+
+```
+
+
+
+##### Problema 6
+
+Um experimento foi executado para determinar se quatro temperaturas de queima específicas afetam a densidade de um certo tipo de tijolo. Um experimento completamente aleatório levou aos seguintes dados:
+
+
+```{r}
+rm(list = ls())
+
+tijolo <- data.frame(temperaturas= c(rep(100,5),rep(125,4),rep(150,5),rep(175,4)),
+                     densidade=c(21.8,21.9,21.7,21.6,21.7,21.7,21.4,21.5,21.4,
+                                 21.9,21.8,21.8,21.6,21.5,21.9,21.7,21.8,21.4))
+tijolo$temperaturaF <- factor(tijolo$temperaturas)
+
+# dispersão dos dados
+ggplot(data = tijolo, mapping = aes(x = temperaturaF, y = densidade)) + 
+  geom_point()
+
+summary(aov(densidade ~ temperaturaF, data = tijolo))
+
+# contrastes
+contrasts(tijolo$temperaturaF) = contr.poly(4)
+
+# modelo
+mod_anova = aov(densidade ~ temperaturaF, data = tijolo)
+summary(mod_anova, split = list("temperaturaF" = list("L"=1,"Q"=2,"C"=3)))
+# No caso nenhum modelo se ajusta bem aos dados??????????????????????????????????????????
+```
+
+
+
+##### Problema 7
+
+Um fabricante de aparelhos de televisão está interessado no efeito na condutividade do tubo de quatro tipos diferentes de revestimento para tubos de imagem a cores. Um experimento completamente aleatório é conduzido e os seguintes dados de condutividade são obtido
+
+```{r}
+rm(list = ls())
+
+tv <- data.frame(revest = c(rep(1,4),rep(2,4),rep(3,4),rep(4,4)),
+                 condutividade = c(143,141,150,146,152,149,137,143,
+                                   134,136,132,127,129,127,132,129))
+
+tv$revestimento <- factor(tv$revest)
+
+# dispersão dos dados
+ggplot(data = tv, mapping = aes(x = revest, y = condutividade)) + 
+  geom_point()
+
+# contrastes
+contrasts(tv$revestimento) = contr.poly(4)
+
+# modelo
+mod_anova <- aov(condutividade ~ revestimento, data = tv)
+summary(mod_anova, split = list("revestimento" = list("L"=1,"Q"=2,"C"=3)))
+
+# ajuste do modelo
+ggplot(data = tv, mapping = aes(x = revest, y = condutividade)) +
+  geom_point() + xlab("tipo de revestimento") +
+  geom_smooth(method = "lm", formula = y~poly(x,3))
+```
+
+
+
+##### Problema 8
+
+Um artigo no ACI Materials Journal (Vol. 84, 1987, pp. 213–216) descreve vários experimentos investigando a aplicação de hastes de concreto para remover o ar aprisionado. Um cilindro de 3 polegadas X 6 polegadas foi usado, e o número de
+vezes que esta haste foi usada é a variável de projeto. O resultado resistência à compressão do corpo de prova de concreto é a resposta. Os dados são mostrados na tabela a seguir:
+
+
+```{r}
+rm(list = ls())
+
+concreto <- data.frame(hastes = c(rep(10,3),rep(15,3),rep(20,3),rep(25,3)),
+                       resistencia = c(1530,1530,1440,1610,1650,1500,
+                                       1560,1730,1530,1500,1490,1510))
+concreto$hastes_factor <- factor(concreto$hastes)
+
+# dispersão dos dados
+ggplot(data = concreto, mapping = aes(x = hastes, y = resistencia)) + 
+  geom_point()
+
+# contrastes
+contrasts(concreto$hastes_factor) = contr.poly(4)
+
+# modelo
+mod_anova <- aov(resistencia ~ hastes_factor, data = concreto)
+summary(mod_anova, split = list("hastes_factor" = list('L'=1,'Q'=2,'C'=3)))
+
+# ajuste do modelo
+ggplot(data = concreto, mapping = aes(x = hastes, y = resistencia)) + 
+  geom_point() + xlab("N° de vezes no uso da haste") + ylab("Resistência à compressão") + 
+  geom_smooth(method = "lm", formula = y~I(x)+I(x^2))
+```
+
+
+
+##### Problema 9
+
+Um artigo na Environment International (Vol. 18, No. 4, 1992) descreve um experimento no qual a quantidade de radônio liberado em chuveiros foi investigado. Água Enriquecida com Radônio foi usado no experimento, e seis diâmetros de orifício diferentes foram testados em chuveiros. Os dados do experimento são mostrado na tabela a seguir:
+
+```{r}
+rm(list = ls())
+
+chuveiros <- data.frame(diametro = c(rep(0.37,4),rep(0.51,4),rep(0.71,4),
+                                     rep(1.02,4),rep(1.40,4),rep(1.99,4)),
+                        radonio = c(80,83,83,85,75,75,79,79,74,73,76,77,
+                                    67,72,74,74,62,62,67,69,60,61,64,66))
+chuveiros$diametro_factor = factor(chuveiros$diametro)
+
+# dispersão dos dados 
+ggplot(data = chuveiros, mapping = aes(x = diametro, y = radonio)) +
+  geom_point()
+
+# contrastes
+contrasts(chuveiros$diametro_factor) = contr.poly(6)
+
+# modelo
+mod_anova <- aov(radonio ~ diametro_factor, data = chuveiros)
+summary(mod_anova, split = list("diametro_factor" = 
+                            list('L'=1,'Q'=2,'C'=3,'^4'=4,'^5'=5)))
+
+# ajuste do modelo
+ggplot(data = chuveiros, mapping = aes(x = diametro, y = radonio)) + 
+  geom_point() + xlab("diâmetro do orifício") + ylab("taxa de radônio") + 
   geom_smooth(method = "lm", formula = y~x)
 ```
 

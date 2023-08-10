@@ -7,6 +7,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(agricolae)
+library(ggplot2)
 ```
 
 ## ANOVA de dois fatores em experimentos fatoriais 
@@ -114,84 +115,34 @@ plot(fitted(anova2), residuals(anova2))
 abline(h=0, col='blue')
 ```
 
-A interação dos tratamentos é significativa, num nível de 1% de significância, portanto não é possível analisar os efeitos principais separadamente, é necessária analisar a interação dos mesmos. Para isso primeiro se analisa a interação da  profundidade de corte dentro de cada taxa de avanço e depois se analisa a taxa de avanço dentro de cada profundidade de corte.
+A interação dos tratamentos não é significativa, num nível de 1% de significância, portanto é possível analisar os efeitos principais separadamente, não sendo necessária a análise da interação dos fatores. Portanto primeiro analisamos a profundidade de corte e depois analisamos a taxa de avanço.
 
 ```{r}
 summary(anova2)
 ```
 
-Ao analisar o efeito das taxas de avanço, com todas as profundidades de corte juntas, temos que a taxa de 0.3 in/min é a única não significativa à um nível de significância de 1%.
+A análise dos efeitos principais por meio do Teste de Tukey mostra que a média das três taxas de avanço diferem significativamente entre si e que somente a média da profundidade de corte de 0.18in e 0.15in não se diferem significativamente entre si.
 
 ```{r}
-mod_inter <- aov(acabam ~ taxa/corte, data = metal)
-names(coef(mod_inter))[4:12]
+tukey_taxa <- HSD.test(y = metal$acabam, trt = metal$taxa,
+                       DFerror = anova2$df.residual,
+                       MSerror = summary(anova2)[[1]][4,3],
+                       alpha = 0.05, console = TRUE)
 
-# estudando a profundidade de corte dentro de cada taxa de avanço
-summary(mod_inter, split = list("taxa:corte" = list("corte d. taxa 0.2" = c(1,4,7),
-                                                    "corte d. taxa 0.25" = c(2,5,8),
-                                                    "corte d. taxa 0.3" = c(3,6,9))))
-```
-
-Fazendo o Teste de comparações múltiplas de Tukey das profundidades de corte dentro de cada taxa de avanço observamos que para a taxa de avanço de 0.20 in/min as profundidades de corte de 0.18 e 0.15in não são significativamente diferentes entre si. Já para a taxa de avanço de 0.30in podemos notar pelo teste de Tukey que nenhuma das profundidades de corte são significativamente diferentes entre si, o que complementa a análise da interação da profundidade de corte dentro de cada taxa de avanço, visto que a taxa de avanço 0.30in não é significativa independentemente da profundidade de corte, como visto pelo modelo.
-
-```{r}
-# profundidades de corte dentro da taxa de avanço de 0.20 in/min
-HSD.test(y = metal$acabam[metal$taxa == "0.2"],
-         trt = metal$corte[metal$taxa == "0.2"],
-         DFerror = anova2$df.residual, alpha = 0.05,
-         MSerror = summary(anova2)[[1]][4,3], group = TRUE,
-         console = TRUE)
-
-# profundidades de corte dentro da taxa de avanço de 0.25 in/min
-HSD.test(y = metal$acabam[metal$taxa == "0.25"], 
-         trt = metal$corte[metal$taxa == "0.25"],
-         DFerror = anova2$df.residual, alpha = 0.05, group = TRUE,
-         MSerror = summary(anova2)[[1]][4,3], console = TRUE)
-
-# profundidades de corte dentro da taxa de avanço de 0.30 in/min
-HSD.test(y = metal$acabam[metal$taxa == "0.3"], 
-         trt = metal$corte[metal$taxa == "0.3"],
-         DFerror = anova2$df.residual, alpha = 0.05, group = TRUE,
-         MSerror = summary(anova2)[[1]][4,3], console = TRUE)
-```
-
-Analisando o resultado das taxas de avanço dentro da profundidade de corte, temos que somente a profundidade de corte de 0.25 in não é significativa para o acamento da superfície do metal.
-
-```{r}
-# estudando a taxa de avanço dentro de cada profundidade
-mod_inter2 <- aov(acabam ~ corte/taxa, data=metal)
-names(coef(mod_inter2))[5:12]
-
-summary(mod_inter2, split = list("corte:taxa" = list("taxa d. corte 0.15" = c(1,5),
-                                                     "taxa d. corte 0.18" = c(2,6),
-                                                     "taxa d. corte 0.20" = c(3,7),
-                                                     "taxa d. corte 0.25" = c(4,8))))
-```
-
-Já ao fazermos o teste de comparações múltiplas para as taxas de avanço dentro de cada profundidade de corte começando pela profundidade de 0.18 in temos que as taxas de avanço de 0.3 e 0.25 não são significativamente diferentes, já ao analisar as taxas de avanço para a profundidade de corte de 0.25in notamos que a taxa de avanço de 0.25in não significativamente diferente das outras.
-
-```{r}
-# taxa de avanço dentro da profundidades de corte 0.18in
-HSD.test(y = metal$acabam[metal$corte == "0.18"], 
-         trt = metal$taxa[metal$corte == "0.18"],
-         DFerror = anova2$df.residual, alpha = 0.05, group = TRUE,
-         MSerror = summary(anova2)[[1]][4,3], console = TRUE)
-
-# taxa de avanço dentro da profundidades de corte 0.25in
-HSD.test(y = metal$acabam[metal$corte == "0.25"], 
-         trt = metal$taxa[metal$corte == "0.25"],
-         DFerror = anova2$df.residual, alpha = 0.05, group = TRUE,
-         MSerror = summary(anova2)[[1]][4,3], console = TRUE)
+tukey_corte <- HSD.test(y = metal$acabam, trt = metal$corte,
+                        DFerror = anova2$df.residual,
+                        MSerror = summary(anova2)[[1]][4,3],
+                        alpha = 0.05, console = TRUE)
 ```
 
 
-A análise do resultado do teste de comparações múltiplas reforça a interpretação da significância das interações do modelo ANOVA de que a profundidade de corte de 0.25 in e as taxas de avanço de 0.25 e 0.30 não são significativas no acabamento da superfície da parte do metal.
 
 ##### Problema 3
 
 Um artigo no Industrial Quality Control (1956, pp.5–8) descreve um experimento para investigar o efeito do tipo de vidro e do tipo de fósforo no brilho de um tubo de televisão. A variável de resposta é a corrente necessária (em microamperes) para obter um nível de correção especificado. Os dados são os seguintes:
 
 ```{r}
+rm(list = ls())
 tv <- data.frame(vidro = factor(c(rep(1,9), rep(2,9))),
                  fosforo = factor(rep(c(rep(1,3), rep(2,3), rep(3,3)),2)),
                  corrent = c(280,290,285,300,310,295,290,285,290,230,235,240,260,240,235,220,225,230))
