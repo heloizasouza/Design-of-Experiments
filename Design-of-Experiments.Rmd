@@ -292,7 +292,8 @@ anova6 <- aov(formula = nota ~ ciclo*operador*temperatura, data = tecidos)
 summary(anova6)
 ```
 
-
+COMO PODERIA PROCEGUIR COM A ANÁLISE ????????
+PODERIA USAR UM EXERCÍCIO DESSE COMO ANOVA DE 2 FATORES COM DELINEAMENTO EM BLOCO???
 
 ### Teste de Falta de ajuste
 
@@ -382,17 +383,71 @@ O quadro da ANOVA e o gráfico de ajuste de modelo mostram que o modelo de melho
 
 
 
+### Polinômios Ortogonais
+
+
+##### Delineamento inteiramente ao acaso
+
+Quatro projetos diferentes para um circuito de computador digital estão sendo estudados para comparar a quantidade de ruído presente. Os seguintes dados foram obtidos:
+
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+computador <- data.frame(circuito = c(rep(1,5),rep(2,5),rep(3,5),rep(4,5)),
+                         circuito_fator=factor(c(rep(1,5),rep(2,5),rep(3,5),rep(4,5))),
+                         ruido = c(19,20,19,30,8,80,61,73,56,80,
+                                   47,26,25,35,50,95,46,83,78,97))
+
+# dispersão dos dados
+ggplot(data = computador, mapping = aes(x = circuito, y = ruido)) +
+  geom_point()
+
+# contrastes
+contrasts(computador$circuito_fator) = contr.poly(4)
+
+# modelo
+anova8 <- aov(formula = ruido ~ circuito_fator, data = computador)
+summary(anova8, split = list("circuito_fator" = list('L'=1,'Q'=2,'C'=3)))
+```
+
+O modelo $y = \mu + \beta_1x + \beta_2x^2 + \beta_3x^3 + \epsilon$ é o que melhor se ajusta aos dados do problema de acordo com a análise da variância dos contrastes polinomiais, o gráfico de ajuste do modelo permite uma melhor  visualização desse resultado.
+
+```{r}
+ggplot(data = computador, mapping = aes(x = circuito, y = ruido)) + 
+  geom_point() + xlab("Designs dos circuitos") + ylab("Ruído") + 
+  geom_smooth(method = 'lm', formula = y~poly(x,3))
+```
 
 
 
+###### Delineamento inteiramente ao acaso com dados faltantes
+
+Vários fornos em uma oficina de metalurgia são usados para aquecer amostras de metal. Todos os fornos devem operar em mesma temperatura, embora se suspeite que isso possa não seja verdade. Três fornos são selecionados aleatoriamente e suas temperaturas em aquecimentos sucessivos são anotadas. Os dados recolhidos são do seguinte modo:
 
 
+```{r}
+rm(list = ls())
 
+# dados do problema
+oficina <- data.frame(forno = c(rep(1,5),rep(2,4),rep(3,6)),
+                      oven = factor(c(rep(1,5),rep(2,4),rep(3,6))),
+                      temp = c(491.50,498.30,498.10,439.50,493.60,
+                               488.50,484.65,479.90,477.35,
+                               490.10,484.80,488.25,473.00,471.85,478.65))
 
+# dispersão dos dados
+ggplot(data = oficina, mapping = aes(x = forno, y = temp)) + 
+  geom_point()
 
+# contrastes
+contrasts(oficina$oven) = contr.poly(3)
 
-
-
+# modelo
+anova9 <- aov(temp~oven,data = oficina)
+summary(anova9, split = list("oven" = list('L'=1,'Q'=2)))
+```
 
 
 
