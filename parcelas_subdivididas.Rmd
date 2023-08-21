@@ -1,0 +1,33 @@
+---
+title: "Nested and Split-Plot Designs"
+author: "Heloiza de Oliveira"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Capítulo 14
+
+**14.1** Um fabricante de propelente para foguetes está estudando a taxa de queima do propelente de três processos de produção. Quatro lotes de propelente são selecionados aleatoriamente da saída de cada processo e três determinações de queima taxa são feitas em cada lote. Os resultados seguem. Analisar o dados e tirar conclusões
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+propelente <- data.frame(processo = factor(c(rep(1,12), rep(2,12), rep(3,12))),
+                         lote = factor(rep(c(rep(1,3),rep(2,3),rep(3,3),rep(4,3)),3)),
+                         parcelas = factor(rep(c('p1','p2','p3'),12)),
+                         taxa = c(25,30,26,19,28,20,15,17,14,15,16,13,
+                                  19,17,14,23,24,21,18,21,17,35,27,25,
+                                  14,15,20,35,21,24,38,54,50,25,29,33))
+
+# modelo
+anova10 <- aov(formula = taxa ~ processo*lote + Error(parcelas), data = propelente)
+summary(anova10)
+```
+
+
+
+**14.4** Para simplificar a programação da produção, um engenheiro industrial está estudando a possibilidade de atribuir um padrão de tempo a uma determinada classe de tarefas, acreditando que as diferenças entre as tarefas são insignificantes. Para ver se essa simplificação é possível, seis tarefas são selecionadas aleatoriamente. Cada trabalho é dado a um grupo diferente de três operadores. Cada operador completa o trabalho duas vezes em momentos diferentes durante a semana, e os seguintes resultados são obtidos. Quais são suas conclusões sobre o uso de um padrão de tempo comum para todos os trabalhos nesta classe?

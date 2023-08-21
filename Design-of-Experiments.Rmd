@@ -14,9 +14,9 @@ library(agricolae)
 ### Anova de 1 Fator
 
 
-##### *Delineamento Inteiramente ao Acaso*
+##### **Delineamento Inteiramente ao Acaso**
 
-Um desenvolvedor de produto está investigando a resistência à tração de uma nova fibra sintética que será usada para fazer tecidos para camisas masculinas. A resistência geralmente é afetada pela porcentagem de algodão usada na mistura de materiais para a fibra. O engenheiro conduz um experimento completamente aleatório com cinco níveis de conteúdo de algodão e repete o experimento cinco vezes.
+**3.10** Um desenvolvedor de produto está investigando a resistência à tração de uma nova fibra sintética que será usada para fazer tecidos para camisas masculinas. A resistência geralmente é afetada pela porcentagem de algodão usada na mistura de materiais para a fibra. O engenheiro conduz um experimento completamente aleatório com cinco níveis de conteúdo de algodão e repete o experimento cinco vezes.
 
 
 ```{r, warning=FALSE}
@@ -50,10 +50,10 @@ Utilizando a anova de 1 fator concluimos que como suspeita o percentual de algod
 
 
 
-##### *Delineamento de Blocos Casualizados*
+##### **Delineamento de Blocos Casualizados**
 
 
-Um fabricante de ligas-mestre de alumínio produz refinadores de grãos na forma de lingotes. A empresa produz o produto em quatro fornos. Cada forno é conhecido por ter suas próprias características operacionais exclusivas, portanto, qualquer experimento realizado na fundição que envolva mais de um forno considerará os fornos como uma variável incômoda. Os engenheiros de processo suspeitam que a taxa de agitação afeta o tamanho do grão do produto. Cada forno pode funcionar em quatro taxas de agitação diferentes. Um projeto de bloco aleatório é executado para um refinador específico e os dados de tamanho de grão resultantes são os seguintes:
+**4.14** Um fabricante de ligas-mestre de alumínio produz refinadores de grãos na forma de lingotes. A empresa produz o produto em quatro fornos. Cada forno é conhecido por ter suas próprias características operacionais exclusivas, portanto, qualquer experimento realizado na fundição que envolva mais de um forno considerará os fornos como uma variável incômoda. Os engenheiros de processo suspeitam que a taxa de agitação afeta o tamanho do grão do produto. Cada forno pode funcionar em quatro taxas de agitação diferentes. Um projeto de bloco aleatório é executado para um refinador específico e os dados de tamanho de grão resultantes são os seguintes:
 
 
 ```{r}
@@ -80,45 +80,39 @@ summary(anova2)
 
 
 
-##### *Delineamento quadrado latino* 
+##### **Delineamento quadrado latino** 
 
-
-Num ensaio de alimentação de suínos usou-se um quadrado latino de 4 x 4, os resultados são referentes aos ganhos de peso, em kg, ao fim de 252 dias. Os tratamentos eram: A - Castração aos 56 dias de idade; B - Animais inteiros; C - Castração aos 7 dias de idade e D - Castração aos 21 dias. As colunas tinham o objetivo de controlar a variação de peso dos leitões dentro de cada leitegada. 
+**4.23** Um engenheiro industrial está investigando o efeito de quatro métodos de montagem (A, B, C, D) no tempo de montagem de um componente de televisão em cores. Quatro operadores são selecionados para o estudo. Além disso, o engenheiro sabe que cada método de montagem produz tal fadiga que o tempo necessário para a última montagem pode ser maior que o tempo necessário para a primeira, independentemente do método. Ou seja, desenvolve-se uma tendência no tempo de montagem necessário. Para levar em conta essa fonte de variabilidade, o engenheiro usa o desenho do quadrado latino mostrado abaixo. Analise os dados deste experimento e tire as conclusões apropriadas.
 
 ```{r}
 rm(list = ls())
 
 # dados do problema
-suinos <- data.frame(leitegada = factor(c(rep(1,4),rep(2,4),rep(3,4),rep(4,4))),
-                     coluna = factor(c(rep(1:4,4))),
-                     tratamento = factor(c('A','B','C','D','B','D','A','C',
-                                           'C','A','D','B','D','C','B','A')),
-                     peso = c(93.0,108.6,108.9,102.0,115.4,96.5,77.9,100.2,
-                              102.1,94.9,116.9,96.0,117.6,114.1,118.7,97.6))
+montagem <- data.frame(metodo = factor(c('C','D','A','B','B','C','D','A',
+                                  'A','B','C','D','D','A','B','C')),
+                       ordem = factor(c(rep(1,4),rep(2,4),rep(3,4),rep(4,4))),
+                       operador = factor(c(rep(1:4,4))),
+                       tempo = c(10,14,7,8,7,18,11,8,5,10,11,9,10,10,12,14))
 
-# dispersão dos dados
-ggplot(data = suinos, mapping = aes(x = tratamento, y = peso)) +
-  geom_boxplot()
-```
+# visualização dos dados
+ggplot(data = montagem, mapping = aes(x = metodo, y = tempo, color = operador)) +
+  geom_point() + ylab('Tempo de montagem') + xlab('Método de montagem')
 
-A análise gráfica da dispersão dos dados do experimento com os suínos levanta suspeitas de uma diferença entre o tratamento A e os demais, contudo ao conduzir a anova de 1 fator, controlando a variação das outras variáveis pelo delinemaneto do quadrado latino, a variável explicativa de tratamentos é não significativa à um nível de 5% de significância. 
-A fim de reforçar essa conclusão o teste de diferenças mínimas significativas de Tukey é conduzido e mostra que de fato os 4 grupos de tratamento não são, em média, significativamete diferentes entre si.
-
-```{r}
 # modelo
-anova3 <- aov(formula = peso ~ leitegada + coluna + tratamento, data = suinos)
+anova3 <- aov(tempo ~ metodo + operador + ordem, data = montagem)
 summary(anova3)
-HSD.test(anova3, trt = 'tratamento', console = T)
+HSD.test(anova3, trt = 'metodo', console = TRUE)
 ```
 
+A análise gráfica do tempo de montagem de um componente de televisão em cores por 4 diferentes métodos de montagem aplicados por 4 operadores diferentes levanta suspeitas de que os métodos têm tempo de execução significativamente diferentes entre si, para uma melhor conclusão desse resultado uma análise da variância de um fator para um delineamento de quadrado latino é aplicado.
 
+E ao nível de 5% de significância temos que os métodos de montagem são significativamente diferentes entre si, e o teste de Tukey revela ainda que os métodos A (de menor média de tempo de montagem) e C (de maior média de tempo de montagem) se diferem significativamente.
 
 ### ANOVA de 2 Fatores
 
+##### **Delineamento inteiramente ao acaso com fatores 2x3**
 
-##### *Delineamento inteiramente ao acaso com interação não significativa*
-
-Um experimento foi conduzido para determinar se a temperatura de queima ou a posição do forno afeta a densidade de cozimento de um ânodo de carbono. 
+**5.13** Um experimento foi conduzido para determinar se a temperatura de queima ou a posição do forno afeta a densidade de cozimento de um ânodo de carbono. 
 
 ```{r}
 rm(list = ls())
@@ -152,11 +146,9 @@ HSD.test(y = carbono$densidade, trt = carbono$temperatura,
 ```
 
 
-##### *Delineamento inteiramente ao acaso com interação significativa*
+##### **Delineamento inteiramente ao acaso com fator 3x3**
 
-
-Um experimento é conduzido para estudar a influência de temperatura operacional e três tipos de vidro frontal na saída de luz de um tubo de osciloscópio.
-
+**5.10** Um experimento é conduzido para estudar a influência de temperatura operacional e três tipos de vidro frontal na saída de luz de um tubo de osciloscópio.
 
 ```{r}
 rm(list = ls())
@@ -254,12 +246,52 @@ O teste de diferenças mínimas significativas de Tukey aponta que para os três
 
 
 
+##### **Delineamento em blocos com fator 3x3**
+
+**5.21** O rendimento de um processo químico está sendo estudado. Os dois fatores de interesse são temperatura e pressão. Três níveis de cada fator são selecionados; no entanto, apenas nove execuções podem ser feitas em um dia. O experimentador executa uma réplica completa do projeto a cada dia. Os dados são mostrados na tabela a seguir. Analise os dados, assumindo que os dias são blocos.
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+quimico <- data.frame(rendimento = c(86.3,84.0,85.8,88.5,87.3,89.0,
+                                     89.1,90.2,91.3, 86.1,85.2,87.3,
+                                     89.4,89.9,90.3,91.7,93.2,93.7),
+                      dia = factor(c(rep(1,9), rep(2,9))),
+                      pressao = factor(rep(c(250,260,270),6)),
+                      temperatura = factor(rep(c(rep('Low',3), rep('Medium',3), rep('High',3)),2), levels = c('Low', 'Medium', 'High')))
+
+# visualização dos dados
+ggplot(data = quimico, mapping = aes(x = temperatura, y = rendimento, color = pressao)) +
+  geom_point() + facet_grid(cols = vars(dia))
+```
+
+A dispersão dos dados do rendimento de um processo quimíco é visualmente afetado pela temperatura e pressão desse processo, para confirmar essa suspeita controlando a variação pelo dia de aplicação do processo um modelo de anova é conduzido. Ao analisar o resultado da Anova verificamos que a interação da pressão e temperatura no processo não é significativa, então é possível analisar os efeitos principais de cada tratamento, sendo tanto a pressão quanto a temperatura significativos. 
+
+
+```{r}
+# modelo
+mod = aov(rendimento ~ dia + pressao*temperatura, data = quimico)
+summary(mod)
+
+# teste de Tukey para a pressão
+HSD.test(y = quimico$rendimento, trt = quimico$pressao, 
+         DFerror = mod$df.residual, MSerror = summary(mod)[[1]][5,3],
+         console = TRUE)
+
+# teste de Tukey para a temperatura
+HSD.test(y = quimico$rendimento, trt = quimico$temperatura,
+         DFerror = mod$df.residual, MSerror = summary(mod)[[1]][5,3],
+         console = TRUE)
+```
+As pressões de 270 e 260 se diferenciam significativamente entre si e todas as temperaturas baixa, média e alta também são, em média, significativamente diferentes entre si.
+
+
 ### ANOVA de 3 Fatores
 
-##### *Delineamento inteiramente ao acaso com interação significativa*
+##### **Delineamento inteiramente ao acaso fatorial 3x3x2**
 
-
-O departamento de controle de qualidade de uma fábrica de acabamento de tecidos está estudando o efeito de vários fatores no tingimento de tecido sintético de algodão usado para fabricar camisas masculinas.
+**5.19** O departamento de controle de qualidade de uma fábrica de acabamento de tecidos está estudando o efeito de vários fatores no tingimento de tecido sintético de algodão usado para fabricar camisas masculinas.
 Três operadores, três tempos de ciclo e duas temperaturas foram selecionados, e três pequenos pedaços de tecido foram tingidos sob cada conjunto de condições. O tecido acabado foi comparado a um padrão e uma pontuação numérica foi atribuída. 
 
 
@@ -275,16 +307,13 @@ tecidos <- data.frame(ciclo = factor(c(rep(40,18),rep(50,18),rep(60,18))),
                                28,24,27,35,35,34,26,27,25,26,29,25,36,37,34,28,26,24))
 
 # dispersão dos dados
-ggplot(data = tecidos, mapping = aes(x = ciclo, y = nota, fill = operador, color = temperatura)) + 
-  geom_boxplot()
-
 ggplot(data = tecidos, mapping = aes(x = ciclo, y = nota, fill = operador)) + 
   geom_boxplot() + facet_grid(cols = vars(temperatura))
 ```
 
 A análise gráfica dos dados do problema nos leva a interpretar que existe uma diferença significativa entre os tratamentos utilizados, visto que comparando o comportamento dos dados para os dois níveis de temperatura temos outputs relativamente diferentes, e ao olhar dentro de uma temperatura tanto o tempo de ciclo quanto os operadores apresentam alguma diferença. Como a análise gráfica só levanta suspeitas do comportamento desse experimento um teste se faz necessário, para isso é conduzido a ANOVA de 3 fatores.
 
-Os resultados do quadro da ANOVA sugerem que ao nível de 5% de significância a interação dos três tratamentos; operadores, tempos de ciclo e temperaturas; são significativas, portanto uma análise post hoc deve ser conduzida para melhor interpretação.
+Os resultados do quadro da ANOVA sugerem que ao nível de 5% de significância a interação dos três tratamentos operadores, tempos de ciclo e temperaturas é significativa, portanto a análise dos efeitos principais não é possível.
 
 ```{r}
 # modelos
@@ -292,15 +321,12 @@ anova6 <- aov(formula = nota ~ ciclo*operador*temperatura, data = tecidos)
 summary(anova6)
 ```
 
-COMO PODERIA PROCEGUIR COM A ANÁLISE ????????
-PODERIA USAR UM EXERCÍCIO DESSE COMO ANOVA DE 2 FATORES COM DELINEAMENTO EM BLOCO???
 
 ### Teste de Falta de ajuste
 
+##### **Delineamento inteiramente ao acaso com teste de ajuste aceito**
 
-##### *Delineamento inteiramente ao acaso com teste de ajuste aceito*
-
-Um fabricante de produtos farmacêuticos deseja investigar a bioatividade de um novo fármaco. Um experimento completamente aleatório de fator único foi conduzido com três níveis de dosagens, e os seguintes resultados foram obtidos.
+**3.12** Um fabricante de produtos farmacêuticos deseja investigar a bioatividade de um novo fármaco. Um experimento completamente aleatório de fator único foi conduzido com três níveis de dosagens, e os seguintes resultados foram obtidos.
 
 ```{r}
 rm(list = ls())
@@ -337,9 +363,9 @@ Para realizar esse teste criamos o modelo de regressão linear simples reduzido 
 Neste experimento, a hipótese nula não foi rejeitada, portanto um modelo de regressão linear simples se ajusta bem aos dados do problema como observado pelo gráfico de ajuste. 
 
 
-##### *Delineamento inteiramente ao acaso com teste de ajuste rejeitado*
+##### **Delineamento inteiramente ao acaso com teste de ajuste rejeitado**
 
-A resistência à tração do cimento Portland está sendo estudada. Quatro diferentes técnicas de mistura podem ser usadas economicamente. Um experimento completamente aleatório foi conduzido e os seguintes dados foram coletados:
+**3.7** A resistência à tração do cimento Portland está sendo estudada. Quatro diferentes técnicas de mistura podem ser usadas economicamente. Um experimento completamente aleatório foi conduzido e os seguintes dados foram coletados:
 
 ```{r}
 rm(list = ls())
@@ -385,10 +411,9 @@ O quadro da ANOVA e o gráfico de ajuste de modelo mostram que o modelo de melho
 
 ### Polinômios Ortogonais
 
-
 ##### Delineamento inteiramente ao acaso
 
-Quatro projetos diferentes para um circuito de computador digital estão sendo estudados para comparar a quantidade de ruído presente. Os seguintes dados foram obtidos:
+**3.24** Quatro projetos diferentes para um circuito de computador digital estão sendo estudados para comparar a quantidade de ruído presente. Os seguintes dados foram obtidos:
 
 
 ```{r}
@@ -424,7 +449,7 @@ ggplot(data = computador, mapping = aes(x = circuito, y = ruido)) +
 
 ###### Delineamento inteiramente ao acaso com dados faltantes
 
-Vários fornos em uma oficina de metalurgia são usados para aquecer amostras de metal. Todos os fornos devem operar em mesma temperatura, embora se suspeite que isso possa não seja verdade. Três fornos são selecionados aleatoriamente e suas temperaturas em aquecimentos sucessivos são anotadas. Os dados recolhidos são do seguinte modo:
+*3.31* Vários fornos em uma oficina de metalurgia são usados para aquecer amostras de metal. Todos os fornos devem operar em mesma temperatura, embora se suspeite que isso possa não seja verdade. Três fornos são selecionados aleatoriamente e suas temperaturas em aquecimentos sucessivos são anotadas. Os dados recolhidos são do seguinte modo:
 
 
 ```{r}
@@ -451,3 +476,47 @@ summary(anova9, split = list("oven" = list('L'=1,'Q'=2)))
 
 
 
+
+### Parcelas subdividida
+
+**14.4** Para simplificar a programação da produção, um engenheiro industrial está estudando a possibilidade de atribuir um padrão de tempo a uma determinada classe de tarefas, acreditando que as diferenças entre as tarefas são insignificantes. Para ver se essa simplificação é possível, seis tarefas são selecionadas aleatoriamente. Cada tarefa é dada a um grupo diferente de três operadores. Cada operador completa a tarefa duas vezes em momentos diferentes durante a semana, e os seguintes resultados são obtidos. Quais são suas conclusões sobre o uso de um padrão de tempo comum para todas as tarefas nesta classe?
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+producao <- data.frame(operador = factor(c(rep(1,12),rep(2,12),rep(3,12))),
+                       tarefa = factor(rep(c(1,1,2,2,3,3,4,4,5,5,6,6),3)),
+                       parcela = factor(rep(c('p1','p2'),18), levels = c('p1','p2')),
+                       tempo = c(158.3,159.4,154.6,154.9,162.5,162.6,160.0,158.7,156.3,158.1,163.7,161.0,
+                                 159.2,159.6,157.7,156.8,161.0,158.9,157.5,158.9,158.3,156.9,162.3,160.3,
+                                 158.9,157.8,154.8,156.3,160.5,159.5,161.1,158.5,157.7,156.9,162.6,161.8))
+
+# visualização dos dados do tratamento de classe de tarefa dentro de cada operador
+with(producao, interaction.plot(x.factor = tarefa, 
+                            trace.factor = operador,
+                            response = tempo, col = c('red','blue','green')))
+
+```
+
+Ao analisar a dispersão da média de tempo gasto na execução de cada classe de tarefa podemos notar que existe uma diferença média entre cada tarefa e dependendo da combinação de operador e tarefa a diferença pode ser mais ou menos acentuada. Para verificar isso uma análise do fator principal operador e do fator secundário tarefa aplicados nas parcelas subdivididas é conduzido pela ANOVA.
+
+```{r}
+# modelo para parcelas subdivididas
+anova10 <- aov(formula = tempo ~ operador*tarefa + Error(parcela), data = producao)
+summary(anova10)
+```
+
+Pelo resultado do quadro de Análise da Variância, ao nível de 5% de significância, notamos que a interação dos fatores não é significativa, portanto uma análise separada dos efeitos principais pode ser conduzida, sendo o fator do operador não significativo no processo, logo somente as classes de tarefas apontam uma diferença média significativa dentre elas. 
+
+```{r}
+#GLRes b e QMRes b
+GLResb =  summary(anova10)$"Error: Within"[[1]][4,1]
+QMResb =  summary(anova10)$"Error: Within"[[1]][4,3]
+
+#Comparações Multiplas - Teste de Tuykey 
+with(producao,HSD.test(y = tempo, trt = tarefa, DFerror = GLResb, MSerror = QMResb, console = TRUE))
+
+```
+
+As classes de tarefas 6, 1 e 2 se diferem significativamente entre si, sendo a tarefa 6 de maior tempo médio e a tarefa 2 de menor tempo médio gasto na execução. Logo podemos concluir que em pelo menos 3 tarefas podem ser aplicados padrões de tempo de execução, como é o caso da tarefa 5 que pode ter seu tempo de execução padronizado pelo tempo de execução da tarefa 1, e a tarefa 3 que pode ser padronizada pelo tempo da tarefa 6.
