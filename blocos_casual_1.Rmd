@@ -133,3 +133,37 @@ tukey <- HSD.test(anova, trt = 'design')
 tukey$groups
 ```
 
+
+## Quadrado Latino
+
+*Livro Curso de Estatística Experimental 13°ed cáp. 6 - pág. 94 - exerc. 6.6.1*
+
+Num ensaio de alimentação de suínos usou-se um quadrado latino de 4 x 4, os resultados são referentes aos ganhos de peso, em kg, ao fim de 252 dias. Os tratamentos eram: A - Castração aos 56 dias de idade; B - Animais inteiros; C - Castração aos 7 dias de idade e D - Castração aos 21 dias. As colunas tinham o objetivo de controlar a variação de peso dos leitões dentro de cada leitegada. 
+
+```{r}
+rm(list = ls())
+
+# dados do problema
+suinos <- data.frame(leitegada = factor(c(rep(1,4),rep(2,4),rep(3,4),rep(4,4))),
+                     coluna = factor(c(rep(1:4,4))),
+                     tratamento = factor(c('A','B','C','D','B','D','A','C',
+                                           'C','A','D','B','D','C','B','A')),
+                     peso = c(93.0,108.6,108.9,102.0,115.4,96.5,77.9,100.2,
+                              102.1,94.9,116.9,96.0,117.6,114.1,118.7,97.6))
+
+# dispersão dos dados
+ggplot(data = suinos, mapping = aes(x = tratamento, y = peso)) +
+  geom_boxplot()
+```
+
+A análise gráfica da dispersão dos dados do experimento com os suínos levanta suspeitas de uma diferença entre o tratamento A e os demais, contudo ao conduzir a anova de 1 fator, controlando a variação das outras variáveis pelo delinemaneto do quadrado latino, a variável explicativa de tratamentos é não significativa à um nível de 5% de significância. 
+A fim de reforçar essa conclusão o teste de diferenças mínimas significativas de Tukey é conduzido e mostra que de fato os 4 grupos de tratamento não são, em média, significativamete diferentes entre si.
+
+```{r}
+# modelo
+anova3 <- aov(formula = peso ~ leitegada + coluna + tratamento, data = suinos)
+summary(anova3)
+HSD.test(anova3, trt = 'tratamento', console = T)
+```
+
+
