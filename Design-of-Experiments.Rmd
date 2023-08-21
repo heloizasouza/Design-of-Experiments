@@ -110,7 +110,7 @@ E ao nível de 5% de significância temos que os métodos de montagem são signi
 
 ### ANOVA de 2 Fatores
 
-##### **Delineamento inteiramente ao acaso com fatores 2x3**
+##### **Delineamento inteiramente ao acaso com esquema de tratamento fatorial 2x3**
 
 **5.13** Um experimento foi conduzido para determinar se a temperatura de queima ou a posição do forno afeta a densidade de cozimento de um ânodo de carbono. 
 
@@ -146,7 +146,7 @@ HSD.test(y = carbono$densidade, trt = carbono$temperatura,
 ```
 
 
-##### **Delineamento inteiramente ao acaso com fator 3x3**
+##### **Delineamento inteiramente ao acaso com esquema de tratamento fatorial 3x3**
 
 **5.10** Um experimento é conduzido para estudar a influência de temperatura operacional e três tipos de vidro frontal na saída de luz de um tubo de osciloscópio.
 
@@ -289,7 +289,7 @@ As pressões de 270 e 260 se diferenciam significativamente entre si e todas as 
 
 ### ANOVA de 3 Fatores
 
-##### **Delineamento inteiramente ao acaso fatorial 3x3x2**
+##### **Delineamento inteiramente ao acaso com esquema de tratamentos fatorial 3x3x2**
 
 **5.19** O departamento de controle de qualidade de uma fábrica de acabamento de tecidos está estudando o efeito de vários fatores no tingimento de tecido sintético de algodão usado para fabricar camisas masculinas.
 Três operadores, três tempos de ciclo e duas temperaturas foram selecionados, e três pequenos pedaços de tecido foram tingidos sob cada conjunto de condições. O tecido acabado foi comparado a um padrão e uma pontuação numérica foi atribuída. 
