@@ -35,19 +35,19 @@ O repositório contém os seguintes tópicos de estudo:
 
 ## Dependências
 
-Para rodar os códigos deste repositório, você precisará do R instalado no seu sistema. Os pacotes utilizados nas análises são:
+O código utiliza as seguintes bibliotecas R:
 
-stats (incluso por padrão no R)
-agricolae (para testes post-hoc como Tukey)
+- `agricolae´ — Para testes post-hoc como Tukey
 
+## Conclusão
 
-Conclusão
-"A análise de Planejamento e Análise de Experimentos forneceu uma compreensão prática das técnicas de ANOVA e seus métodos associados para análise de dados experimentais. Com base nas análises, foi possível observar:
+A análise de Planejamento e Análise de Experimentos forneceu uma compreensão prática das técnicas de ANOVA e seus métodos associados para análise de dados experimentais. Com base nas análises, foi possível observar:
 
-A importância de verificar as suposições de normalidade e homogeneidade de variâncias antes de realizar a ANOVA.
+A importância de verificar as suposições de normalidade e homogeneidade de variâncias antes de inferir sobre os resultados da ANOVA.
 O impacto dos fatores experimentais sobre a variável de resposta, que pode variar dependendo do tipo de delineamento experimental utilizado (inteiramente ao acaso, blocos casualizados ou quadrado latino).
 A utilidade dos testes post-hoc, como o de Tukey, para identificar quais grupos são significativamente diferentes após a ANOVA.
-Essas ferramentas são fundamentais para o planejamento de experimentos e para a análise de resultados em diversas áreas de pesquisa científica e engenharia."
+Essas ferramentas são fundamentais para o planejamento de experimentos e para a análise de resultados em diversas áreas de pesquisa científica e engenharia.
 
-Contribuição
+## Contribuição
+
 Se você tiver sugestões, correções ou melhorias para os scripts, sinta-se à vontade para abrir uma issue ou enviar um pull request.
