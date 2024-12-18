@@ -37,7 +37,7 @@ O repositório contém os seguintes tópicos de estudo:
 
 O código utiliza as seguintes bibliotecas R:
 
-- `agricolae´ — Para testes post-hoc como Tukey
+- `agricolae` — Para testes post-hoc como Tukey
 
 ## Conclusão
 
